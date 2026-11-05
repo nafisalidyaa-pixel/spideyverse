@@ -2,6 +2,12 @@
 require_once __DIR__ . '/inc/koneksi.php';
 require_once __DIR__ . '/inc/helpers.php';
 
+$idRolePilihan = (int) ($_GET['role'] ?? 0);
+$rolePilihan = null;
+if ($idRolePilihan > 0) {
+    $rolePilihan = db_one('SELECT idrole, nama_role FROM role WHERE idrole = ?', [$idRolePilihan]);
+}
+
 if (!empty($_SESSION['user'])) {
     header('Location: index.php');
     exit;
@@ -72,6 +78,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
 
         <h1 class="judul-timbul">Masuk</h1>
+
+        <?php if ($rolePilihan): ?>
+            <div class="alert alert-info">
+                Anda akan masuk sebagai <b><?= e($rolePilihan['nama_role']) ?></b>.
+                Isi username dan password untuk role tersebut.
+            </div>
+        <?php endif; ?>
 
         <?php if ($error !== ''): ?>
             <div class="alert alert-error"><?= e($error) ?></div>

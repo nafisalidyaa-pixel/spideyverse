@@ -3,6 +3,7 @@ $JUDUL = $JUDUL ?? 'Dashboard';
 $AKTIF = $AKTIF ?? '';
 $u = user_login();
 $role = id_role();
+$daftarRole = db_all('SELECT idrole, nama_role FROM role ORDER BY idrole');
 
 $menu = [];
 if ($role === 1) {
@@ -119,7 +120,20 @@ if ($role === 1) {
                 <div class="avatar" aria-hidden="true"><?= e(strtoupper(substr((string) ($u['username'] ?? 'U'), 0, 1))) ?></div>
                 <div class="user-info">
                     <span class="user-nama"><?= e($u['username'] ?? '') ?></span>
-                    <span class="badge badge-role"><span class="badge-titik"></span> Role aktif: <?= e($u['nama_role'] ?? '') ?></span>
+                    <form method="get" action="logout.php" class="pilih-role">
+                        <label class="sr-only" for="pilihRole">Ganti role</label>
+                        <select id="pilihRole" name="role" onchange="this.form.submit()"
+                                aria-label="Ganti role" title="Pilih role lain, lalu masuk kembali">
+                            <optgroup label="Role aktif: <?= e($u['nama_role'] ?? '') ?>">
+                                <?php foreach ($daftarRole as $r): ?>
+                                    <option value="<?= (int) $r['idrole'] ?>"
+                                        <?= (int) $r['idrole'] === (int) $role ? 'selected' : '' ?>>
+                                        <?= e($r['nama_role']) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </optgroup>
+                        </select>
+                    </form>
                 </div>
                 <a href="logout.php" class="btn btn-kecil btn-outline">Keluar</a>
             </div>

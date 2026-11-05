@@ -164,6 +164,7 @@ spideyverse/
 - Setiap proses berhasil menampilkan **popup notifikasi** dengan tombol **OK**; popup tidak menutup sendiri.
 - Margin penjualan dipilih otomatis dari margin yang berstatus aktif.
 - Vendor pengadaan dipilih otomatis berdasarkan jenis setiap barang; barang dari vendor berbeda dibuatkan pengadaan terpisah.
+- Role aktif pada topbar berupa menu pilihan; memilih role lain akan mengarahkan pengguna ke halaman login.
 - Panel, kartu, dan tabel memakai latar putih bersih dengan garis halus, cocok untuk suasana kantoran.
 - Tombol menampilkan bayangan tebal khas tombol fisik; saat ditekan, tombol tenggelam mendekati panel.
 - Efek kilau muncul pada tombol utama dan tombol OK di popup.
