@@ -2,24 +2,34 @@
 require_once __DIR__ . '/inc/auth.php';
 cek_role([1, 2]);
 
-$vendorAuto = db_one(
-    "SELECT v.idvendor, v.nama_vendor,
-            (SELECT COUNT(*) FROM pengadaan p WHERE p.vendor_idvendor = v.idvendor) AS jumlah_pengadaan
-     FROM vendor v
-     WHERE v.status = 'A'
-     ORDER BY jumlah_pengadaan DESC, v.nama_vendor ASC
-     LIMIT 1"
-);
-$vendorIdDefault = $vendorAuto ? (int) $vendorAuto['idvendor'] : 0;
-$barang = db_all("SELECT idbarang, nama, harga FROM barang WHERE status = 1 ORDER BY nama");
+$daftarVendor = db_all("SELECT idvendor, nama_vendor FROM vendor WHERE status = 'A' ORDER BY idvendor");
+$barang = db_all("SELECT idbarang, nama, jenis, harga FROM barang WHERE status = 1 ORDER BY nama");
+
+// Pemetaan vendor otomatis per jenis barang.
+$jenisVendor = [];
+if ($daftarVendor) {
+    $daftarJenis = array_keys(jenis_barang());
+    foreach ($daftarJenis as $i => $jenis) {
+        $jenisVendor[$jenis] = $daftarVendor[$i % count($daftarVendor)];
+    }
+}
+$vendorBarang = [];
+foreach ($barang as $b) {
+    $v = $jenisVendor[$b['jenis']] ?? ($daftarVendor[0] ?? null);
+    if ($v) {
+        $vendorBarang[(int) $b['idbarang']] = [
+            'idvendor' => (int) $v['idvendor'],
+            'nama'     => $v['nama_vendor'],
+        ];
+    }
+}
 
 $errors = [];
-$vendorId = (int) ($_POST['vendor_idvendor'] ?? $vendorIdDefault);
 $baris = $_POST['baris'] ?? [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if ($vendorId <= 0) {
-        $errors[] = 'Vendor otomatis belum tersedia.';
+    if (!$daftarVendor) {
+        $errors[] = 'Belum ada vendor aktif. Aktifkan vendor di menu Data Vendor.';
     }
 
     $items = [];
@@ -43,7 +53,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errors[] = 'Harga tidak boleh negatif.';
             continue;
         }
-        $items[] = ['idbarang' => $idbarang, 'harga' => $harga, 'jumlah' => $jumlah];
+
+        $v = $vendorBarang[$idbarang] ?? null;
+        if (!$v) {
+            $errors[] = 'Vendor otomatis untuk salah satu barang belum tersedia.';
+            continue;
+        }
+
+        $items[] = [
+            'idbarang' => $idbarang,
+            'harga'    => $harga,
+            'jumlah'   => $jumlah,
+            'idvendor' => $v['idvendor'],
+        ];
     }
 
     if (!$items) {
@@ -54,40 +76,66 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $pdo->beginTransaction();
 
-            $subtotal = 0;
-            $hitung = [];
+            // Setiap barang otomatis dikaitkan dengan vendornya.
+            // Barang dari vendor berbeda dibuat dalam pengadaan terpisah.
+            $grup = [];
             foreach ($items as $item) {
-                $sub = (int) db_val(
-                    "SELECT fn_hitung_subtotal(?, ?)",
-                    [$item['harga'], $item['jumlah']]
-                );
-                $hitung[] = $sub;
-                $subtotal += $sub;
+                $grup[$item['idvendor']][] = $item;
             }
 
-            $ppn = (int) round($subtotal * 0.11);
-            $total = $subtotal + $ppn;
+            $daftarId = [];
+            $daftarNama = [];
+            foreach ($grup as $idvendor => $rows) {
+                $subtotal = 0;
+                $hitung = [];
+                foreach ($rows as $item) {
+                    $sub = (int) db_val(
+                        "SELECT fn_hitung_subtotal(?, ?)",
+                        [$item['harga'], $item['jumlah']]
+                    );
+                    $hitung[] = $sub;
+                    $subtotal += $sub;
+                }
 
-            db_exec(
-                "INSERT INTO pengadaan
-                    (user_iduser, status, vendor_idvendor, subtotal_nilai, ppn, total_nilai)
-                 VALUES (?, 'D', ?, ?, ?, ?)",
-                [id_user(), $vendorId, $subtotal, $ppn, $total]
-            );
-            $idPengadaan = db_insert_id();
+                $ppn = (int) round($subtotal * 0.11);
+                $total = $subtotal + $ppn;
 
-            foreach ($items as $i => $item) {
                 db_exec(
-                    "INSERT INTO detail_pengadaan
-                        (harga_satuan, jumlah, sub_total, idbarang, idpengadaan)
-                     VALUES (?, ?, ?, ?, ?)",
-                    [$item['harga'], $item['jumlah'], $hitung[$i], $item['idbarang'], $idPengadaan]
+                    "INSERT INTO pengadaan
+                        (user_iduser, status, vendor_idvendor, subtotal_nilai, ppn, total_nilai)
+                     VALUES (?, 'D', ?, ?, ?, ?)",
+                    [id_user(), $idvendor, $subtotal, $ppn, $total]
                 );
+                $idPengadaan = db_insert_id();
+                $daftarId[] = $idPengadaan;
+
+                $namaVendor = 'Vendor';
+                foreach ($daftarVendor as $v) {
+                    if ((int) $v['idvendor'] === (int) $idvendor) {
+                        $namaVendor = $v['nama_vendor'];
+                        break;
+                    }
+                }
+                $daftarNama[] = '#' . $idPengadaan . ' (' . $namaVendor . ')';
+
+                foreach ($rows as $i => $item) {
+                    db_exec(
+                        "INSERT INTO detail_pengadaan
+                            (harga_satuan, jumlah, sub_total, idbarang, idpengadaan)
+                         VALUES (?, ?, ?, ?, ?)",
+                        [$item['harga'], $item['jumlah'], $hitung[$i], $item['idbarang'], $idPengadaan]
+                    );
+                }
             }
 
             $pdo->commit();
-            flash('sukses', 'Pengadaan #' . $idPengadaan . ' berhasil dibuat dan menunggu persetujuan.');
-            redirect_dengan_log('pengadaan_detail.php?id=' . $idPengadaan);
+
+            $pesan = (count($daftarId) > 1)
+                ? 'Barang dari vendor berbeda dibuatkan pengadaan terpisah: ' . implode(', ', $daftarNama) . '. Menunggu persetujuan.'
+                : 'Pengadaan #' . $daftarId[0] . ' berhasil dibuat dan menunggu persetujuan.';
+
+            flash('sukses', $pesan);
+            redirect_dengan_log('pengadaan.php');
         } catch (PDOException $e) {
             if ($pdo->inTransaction()) {
                 $pdo->rollBack();
@@ -104,24 +152,23 @@ require __DIR__ . '/inc/header.php';
 
 <div class="panel">
     <h2>Form Pengadaan Baru</h2>
-    <p><small>Subtotal dihitung otomatis dari harga satuan dan jumlah, lalu ditambah PPN 11%.</small></p>
+    <p><small>Vendor setiap barang dipilih otomatis. Barang dari vendor berbeda dibuatkan pengadaan terpisah.</small></p>
 
     <?php foreach ($errors as $pesan): ?>
         <div class="alert alert-error"><?= e($pesan) ?></div>
     <?php endforeach; ?>
 
-    <?php if (!$vendorAuto): ?>
+    <?php if (!$daftarVendor): ?>
         <div class="alert alert-error">Belum ada vendor aktif. Aktifkan vendor di menu Data Vendor.</div>
     <?php endif; ?>
 
     <form method="post" action="pengadaan_tambah.php">
         <div class="form-grid">
             <div>
-                <label for="vendor">Vendor <span class="teks-otomatis">otomatis</span></label>
-                <input type="text" id="vendor" tabindex="-1" readonly
-                       value="<?= $vendorAuto ? e($vendorAuto['nama_vendor']) : 'Belum ada vendor aktif' ?>">
-                <input type="hidden" name="vendor_idvendor" value="<?= (int) $vendorIdDefault ?>">
-                <small class="hint-otomatis">Dipilih otomatis berdasarkan vendor aktif yang paling sering dipakai.</small>
+                <label>Vendor <span class="teks-otomatis">otomatis</span></label>
+                <input type="text" tabindex="-1" readonly
+                       value="Mengikuti vendor barang yang dipilih">
+                <small class="hint-otomatis">Setiap barang otomatis terhubung ke vendornya. Barang dari vendor berbeda dibuatkan pengadaan terpisah.</small>
             </div>
             <div>
                 <label>Dibuat Oleh</label>
@@ -135,6 +182,7 @@ require __DIR__ . '/inc/header.php';
                 <thead>
                     <tr>
                         <th>Barang</th>
+                        <th>Vendor</th>
                         <th class="angka">Harga Satuan</th>
                         <th class="angka">Jumlah</th>
                         <th class="angka">Subtotal</th>
@@ -147,12 +195,15 @@ require __DIR__ . '/inc/header.php';
                             <select name="baris[0][idbarang]" class="pilih-barang" onchange="isiHarga(this)">
                                 <option value="">- pilih barang -</option>
                                 <?php foreach ($barang as $b): ?>
-                                    <option value="<?= (int) $b['idbarang'] ?>" data-harga="<?= (int) $b['harga'] ?>">
+                                    <option value="<?= (int) $b['idbarang'] ?>"
+                                            data-harga="<?= (int) $b['harga'] ?>"
+                                            data-vendor="<?= e($vendorBarang[(int) $b['idbarang']]['nama'] ?? '-') ?>">
                                         <?= e($b['nama']) ?> (<?= rupiah($b['harga']) ?>)
                                     </option>
                                 <?php endforeach; ?>
                             </select>
                         </td>
+                        <td class="vendor-baris">Otomatis</td>
                         <td class="angka">
                             <input type="number" name="baris[0][harga]" class="input-harga" min="0" value="0" onchange="hitungTotal()">
                         </td>
@@ -179,7 +230,7 @@ require __DIR__ . '/inc/header.php';
         </div>
 
         <div class="form-aksi">
-            <button type="submit" class="btn" <?= !$vendorAuto ? 'disabled' : '' ?>>Simpan Pengadaan</button>
+            <button type="submit" class="btn" <?= !$daftarVendor ? 'disabled' : '' ?>>Simpan Pengadaan</button>
             <a class="btn btn-outline" href="pengadaan.php">Batal</a>
         </div>
     </form>
@@ -196,7 +247,9 @@ function isiHarga(select) {
     const baris = select.closest('.baris-item');
     const opsi = select.options[select.selectedIndex];
     const harga = opsi ? (opsi.dataset.harga || 0) : 0;
+    const vendor = opsi && opsi.dataset.vendor ? opsi.dataset.vendor : 'Otomatis';
     baris.querySelector('.input-harga').value = harga;
+    baris.querySelector('.vendor-baris').textContent = vendor;
     hitungTotal();
 }
 
@@ -213,6 +266,7 @@ function tambahBaris() {
     baru.querySelector('.input-jumlah').name = 'baris[' + n + '][jumlah]';
     baru.querySelector('.input-jumlah').value = 1;
     baru.querySelector('.subtotal-baris').textContent = 'Rp 0';
+    baru.querySelector('.vendor-baris').textContent = 'Otomatis';
 
     tbody.appendChild(baru);
     hitungTotal();

@@ -145,7 +145,7 @@ CREATE TABLE `detail_pengadaan` (
   KEY `idpengadaan` (`idpengadaan`),
   CONSTRAINT `detail_pengadaan_ibfk_1` FOREIGN KEY (`idbarang`) REFERENCES `barang` (`idbarang`),
   CONSTRAINT `detail_pengadaan_ibfk_2` FOREIGN KEY (`idpengadaan`) REFERENCES `pengadaan` (`idpengadaan`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -154,7 +154,7 @@ CREATE TABLE `detail_pengadaan` (
 
 LOCK TABLES `detail_pengadaan` WRITE;
 /*!40000 ALTER TABLE `detail_pengadaan` DISABLE KEYS */;
-INSERT INTO `detail_pengadaan` VALUES (1,85000,10,850000,1,1),(2,65000,10,650000,2,1),(3,125000,7,875000,47,2),(4,175000,9,1575000,14,3);
+INSERT INTO `detail_pengadaan` VALUES (1,85000,10,850000,1,1),(2,65000,10,650000,2,1),(3,125000,7,875000,47,2),(4,175000,9,1575000,14,3),(5,175000,30,5250000,31,4);
 /*!40000 ALTER TABLE `detail_pengadaan` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -482,7 +482,7 @@ CREATE TABLE `pengadaan` (
   KEY `vendor_idvendor` (`vendor_idvendor`),
   CONSTRAINT `pengadaan_ibfk_1` FOREIGN KEY (`user_iduser`) REFERENCES `user` (`iduser`),
   CONSTRAINT `pengadaan_ibfk_2` FOREIGN KEY (`vendor_idvendor`) REFERENCES `vendor` (`idvendor`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -491,7 +491,7 @@ CREATE TABLE `pengadaan` (
 
 LOCK TABLES `pengadaan` WRITE;
 /*!40000 ALTER TABLE `pengadaan` DISABLE KEYS */;
-INSERT INTO `pengadaan` VALUES (1,'2026-11-04 16:47:48',2,'A',1,1500000,165000,1665000),(2,'2026-11-04 17:33:41',1,'A',4,875000,96250,971250),(3,'2026-11-05 01:46:00',1,'A',2,1575000,173250,1748250);
+INSERT INTO `pengadaan` VALUES (1,'2026-11-04 16:47:48',2,'A',1,1500000,165000,1665000),(2,'2026-11-04 17:33:41',1,'A',4,875000,96250,971250),(3,'2026-11-05 01:46:00',1,'A',2,1575000,173250,1748250),(4,'2026-11-05 03:37:45',1,'D',2,5250000,577500,5827500);
 /*!40000 ALTER TABLE `pengadaan` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1060,4 +1060,4 @@ USE `spideyverse`;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-11-05 10:14:40
+-- Dump completed on 2026-11-05 10:48:51
