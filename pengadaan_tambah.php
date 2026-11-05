@@ -218,7 +218,7 @@ require __DIR__ . '/inc/header.php';
         </div>
 
         <div class="form-aksi">
-            <button type="button" class="btn btn-outline" onclick="tambahBaris()">+ Tambah Baris</button>
+            <button type="button" class="btn btn-outline" onclick="tambahBaris()">+ Tambah Barang</button>
         </div>
 
         <div class="panel-putih panel mt">

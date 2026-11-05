@@ -145,7 +145,7 @@ CREATE TABLE `detail_pengadaan` (
   KEY `idpengadaan` (`idpengadaan`),
   CONSTRAINT `detail_pengadaan_ibfk_1` FOREIGN KEY (`idbarang`) REFERENCES `barang` (`idbarang`),
   CONSTRAINT `detail_pengadaan_ibfk_2` FOREIGN KEY (`idpengadaan`) REFERENCES `pengadaan` (`idpengadaan`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -154,7 +154,7 @@ CREATE TABLE `detail_pengadaan` (
 
 LOCK TABLES `detail_pengadaan` WRITE;
 /*!40000 ALTER TABLE `detail_pengadaan` DISABLE KEYS */;
-INSERT INTO `detail_pengadaan` VALUES (1,85000,10,850000,1,1),(2,65000,10,650000,2,1),(3,125000,7,875000,47,2),(4,175000,9,1575000,14,3),(5,175000,30,5250000,31,4);
+INSERT INTO `detail_pengadaan` VALUES (1,85000,10,850000,1,1),(2,65000,10,650000,2,1),(3,125000,7,875000,47,2),(4,175000,9,1575000,14,3),(5,175000,30,5250000,31,4),(6,85000,17,1445000,23,5),(7,185000,35,6475000,15,6);
 /*!40000 ALTER TABLE `detail_pengadaan` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -177,7 +177,7 @@ CREATE TABLE `detail_penjualan` (
   KEY `idbarang` (`idbarang`),
   CONSTRAINT `detail_penjualan_ibfk_1` FOREIGN KEY (`penjualan_idpenjualan`) REFERENCES `penjualan` (`idpenjualan`),
   CONSTRAINT `detail_penjualan_ibfk_2` FOREIGN KEY (`idbarang`) REFERENCES `barang` (`idbarang`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -186,7 +186,7 @@ CREATE TABLE `detail_penjualan` (
 
 LOCK TABLES `detail_penjualan` WRITE;
 /*!40000 ALTER TABLE `detail_penjualan` DISABLE KEYS */;
-INSERT INTO `detail_penjualan` VALUES (1,93500,2,187000,1,1),(2,93500,1,93500,3,1),(3,137500,7,962500,5,47);
+INSERT INTO `detail_penjualan` VALUES (1,93500,2,187000,1,1),(2,93500,1,93500,3,1),(3,137500,7,962500,5,47),(4,93500,1,93500,8,1);
 /*!40000 ALTER TABLE `detail_penjualan` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
@@ -281,7 +281,7 @@ CREATE TABLE `detail_retur` (
   KEY `iddetail_penerimaan` (`iddetail_penerimaan`),
   CONSTRAINT `detail_retur_ibfk_1` FOREIGN KEY (`idretur`) REFERENCES `retur` (`idretur`),
   CONSTRAINT `detail_retur_ibfk_2` FOREIGN KEY (`iddetail_penerimaan`) REFERENCES `detail_penerimaan` (`iddetail_penerimaan`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -290,7 +290,7 @@ CREATE TABLE `detail_retur` (
 
 LOCK TABLES `detail_retur` WRITE;
 /*!40000 ALTER TABLE `detail_retur` DISABLE KEYS */;
-INSERT INTO `detail_retur` VALUES (1,1,'Barang rusak',1,1);
+INSERT INTO `detail_retur` VALUES (1,1,'Barang rusak',1,1),(4,2,'terdapat retakan di bawah tumbler',4,1);
 /*!40000 ALTER TABLE `detail_retur` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
@@ -387,7 +387,7 @@ CREATE TABLE `kartu_stok` (
   PRIMARY KEY (`idkartu_stok`),
   KEY `idbarang` (`idbarang`),
   CONSTRAINT `kartu_stok_ibfk_1` FOREIGN KEY (`idbarang`) REFERENCES `barang` (`idbarang`)
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -396,7 +396,7 @@ CREATE TABLE `kartu_stok` (
 
 LOCK TABLES `kartu_stok` WRITE;
 /*!40000 ALTER TABLE `kartu_stok` DISABLE KEYS */;
-INSERT INTO `kartu_stok` VALUES (1,'M',10,0,10,'2026-11-04 16:47:48',1,1),(2,'M',10,0,10,'2026-11-04 16:47:48',1,2),(3,'R',0,1,9,'2026-11-04 16:47:48',1,1),(4,'K',0,2,7,'2026-11-04 16:47:48',1,1),(5,'K',0,1,6,'2026-11-04 17:26:46',3,1),(6,'M',7,0,7,'2026-11-04 17:35:27',2,47),(7,'M',9,0,9,'2026-11-05 01:48:53',3,14),(8,'K',0,7,0,'2026-11-05 01:50:03',5,47);
+INSERT INTO `kartu_stok` VALUES (1,'M',10,0,10,'2026-11-04 16:47:48',1,1),(2,'M',10,0,10,'2026-11-04 16:47:48',1,2),(3,'R',0,1,9,'2026-11-04 16:47:48',1,1),(4,'K',0,2,7,'2026-11-04 16:47:48',1,1),(5,'K',0,1,6,'2026-11-04 17:26:46',3,1),(6,'M',7,0,7,'2026-11-04 17:35:27',2,47),(7,'M',9,0,9,'2026-11-05 01:48:53',3,14),(8,'K',0,7,0,'2026-11-05 01:50:03',5,47),(9,'R',0,2,4,'2026-11-05 04:19:39',4,1),(10,'K',0,1,3,'2026-11-05 04:20:58',8,1);
 /*!40000 ALTER TABLE `kartu_stok` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -482,7 +482,7 @@ CREATE TABLE `pengadaan` (
   KEY `vendor_idvendor` (`vendor_idvendor`),
   CONSTRAINT `pengadaan_ibfk_1` FOREIGN KEY (`user_iduser`) REFERENCES `user` (`iduser`),
   CONSTRAINT `pengadaan_ibfk_2` FOREIGN KEY (`vendor_idvendor`) REFERENCES `vendor` (`idvendor`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -491,7 +491,7 @@ CREATE TABLE `pengadaan` (
 
 LOCK TABLES `pengadaan` WRITE;
 /*!40000 ALTER TABLE `pengadaan` DISABLE KEYS */;
-INSERT INTO `pengadaan` VALUES (1,'2026-11-04 16:47:48',2,'A',1,1500000,165000,1665000),(2,'2026-11-04 17:33:41',1,'A',4,875000,96250,971250),(3,'2026-11-05 01:46:00',1,'A',2,1575000,173250,1748250),(4,'2026-11-05 03:37:45',1,'D',2,5250000,577500,5827500);
+INSERT INTO `pengadaan` VALUES (1,'2026-11-04 16:47:48',2,'A',1,1500000,165000,1665000),(2,'2026-11-04 17:33:41',1,'A',4,875000,96250,971250),(3,'2026-11-05 01:46:00',1,'A',2,1575000,173250,1748250),(4,'2026-11-05 03:37:45',1,'A',2,5250000,577500,5827500),(5,'2026-11-05 03:58:21',1,'A',5,1445000,158950,1603950),(6,'2026-11-05 03:58:39',1,'A',3,6475000,712250,7187250);
 /*!40000 ALTER TABLE `pengadaan` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -515,7 +515,7 @@ CREATE TABLE `penjualan` (
   KEY `idmargin_penjualan` (`idmargin_penjualan`),
   CONSTRAINT `penjualan_ibfk_1` FOREIGN KEY (`iduser`) REFERENCES `user` (`iduser`),
   CONSTRAINT `penjualan_ibfk_2` FOREIGN KEY (`idmargin_penjualan`) REFERENCES `margin_penjualan` (`idmargin_penjualan`)
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -524,7 +524,7 @@ CREATE TABLE `penjualan` (
 
 LOCK TABLES `penjualan` WRITE;
 /*!40000 ALTER TABLE `penjualan` DISABLE KEYS */;
-INSERT INTO `penjualan` VALUES (1,'2026-11-04 16:47:48',187000,20570,207570,3,1),(3,'2026-11-04 17:26:46',93500,10285,103785,3,1),(5,'2026-11-05 01:50:03',962500,105875,1068375,3,1);
+INSERT INTO `penjualan` VALUES (1,'2026-11-04 16:47:48',187000,20570,207570,3,1),(3,'2026-11-04 17:26:46',93500,10285,103785,3,1),(5,'2026-11-05 01:50:03',962500,105875,1068375,3,1),(8,'2026-11-05 04:20:58',93500,10285,103785,3,1);
 /*!40000 ALTER TABLE `penjualan` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -545,7 +545,7 @@ CREATE TABLE `retur` (
   KEY `iduser` (`iduser`),
   CONSTRAINT `retur_ibfk_1` FOREIGN KEY (`idpenerimaan`) REFERENCES `penerimaan` (`idpenerimaan`),
   CONSTRAINT `retur_ibfk_2` FOREIGN KEY (`iduser`) REFERENCES `user` (`iduser`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -554,7 +554,7 @@ CREATE TABLE `retur` (
 
 LOCK TABLES `retur` WRITE;
 /*!40000 ALTER TABLE `retur` DISABLE KEYS */;
-INSERT INTO `retur` VALUES (1,'2026-11-04 16:47:48',1,2);
+INSERT INTO `retur` VALUES (1,'2026-11-04 16:47:48',1,2),(4,'2026-11-05 04:19:39',1,2);
 /*!40000 ALTER TABLE `retur` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1060,4 +1060,4 @@ USE `spideyverse`;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-11-05 10:48:51
+-- Dump completed on 2026-11-05 11:35:39

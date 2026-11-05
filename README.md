@@ -81,7 +81,7 @@ Lalu buka **http://127.0.0.1:8123**.
 
 ### Kasir
 - Dashboard kasir (transaksi & pendapatan hari ini)
-- Transaksi penjualan (memanggil stored procedure)
+- Transaksi penjualan: keranjang banyak barang (tambah/hapus baris) dalam satu transaksi
 - Riwayat penjualan (hanya miliknya sendiri) + bukti transaksi
 - Melihat Barang & Stok, Kartu Stok, Laporan Stok
 - **Tidak bisa**: master data, pengadaan/penerimaan/retur, user, laporan penjualan global
@@ -119,7 +119,7 @@ Lalu buka **http://127.0.0.1:8123**.
   - `trg_penjualan_stok` - mengurangi stok saat penjualan
   - `trg_penjualan_validasi_stok` - menolak penjualan jika stok kurang
 - **1 function**: `fn_hitung_subtotal(harga, jumlah)`
-- **1 stored procedure**: `sp_tambah_penjualan(iduser, idmargin, idbarang, jumlah)`
+- **1 stored procedure**: `sp_tambah_penjualan(iduser, idmargin, idbarang, jumlah)` (tersimpan di database untuk kompatibilitas dengan kebutuhan tugas, tidak dipakai halaman penjualan)
 
 ## View Master
 

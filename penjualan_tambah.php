@@ -14,6 +14,13 @@ $barang = db_all(
      ORDER BY b.nama"
 );
 
+$stokBarang  = [];
+$hargaBarang = [];
+foreach ($barang as $b) {
+    $stokBarang[(int) $b['idbarang']]  = (int) $b['stok'];
+    $hargaBarang[(int) $b['idbarang']] = (int) $b['harga'];
+}
+
 $marginAuto = db_one(
     "SELECT idmargin_penjualan, persen
      FROM margin_penjualan
@@ -23,50 +30,110 @@ $marginAuto = db_one(
 );
 
 $idmarginAuto = $marginAuto ? (int) $marginAuto['idmargin_penjualan'] : 0;
+$persenAuto   = $marginAuto ? (float) $marginAuto['persen'] : 0;
 
-$idbarang = (int) ($_POST['idbarang'] ?? 0);
-$idmargin = (int) ($_POST['idmargin'] ?? $idmarginAuto);
-$jumlah   = (int) ($_POST['jumlah'] ?? 1);
+$baris = $_POST['baris'] ?? [];
 
 /* =====================================================
-   PROSES PENJUALAN -> CALL stored procedure
+   PROSES PENJUALAN: KERANJANG (BANYAK BARANG)
+   Dijalankan dalam satu transaksi.
 ===================================================== */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if ($idbarang <= 0) {
-        $errors[] = 'Barang wajib dipilih.';
+    $items = [];
+
+    foreach ($baris as $row) {
+        $idbarang = (int) ($row['idbarang'] ?? 0);
+        $jumlah   = (int) ($row['jumlah'] ?? 0);
+
+        if ($idbarang <= 0 && $jumlah <= 0) {
+            continue;
+        }
+        if ($idbarang <= 0) {
+            $errors[] = 'Barang pada salah satu baris belum dipilih.';
+            continue;
+        }
+        if ($jumlah <= 0) {
+            $errors[] = 'Jumlah pada salah satu baris harus lebih dari nol.';
+            continue;
+        }
+
+        $items[] = ['idbarang' => $idbarang, 'jumlah' => $jumlah];
     }
-    if ($idmargin <= 0) {
-        $errors[] = 'Margin penjualan wajib dipilih.';
+
+    if (!$items) {
+        $errors[] = 'Minimal satu barang harus diisi.';
     }
-    if ($jumlah <= 0) {
-        $errors[] = 'Jumlah harus lebih dari nol.';
+
+    // Stok dihitung gabungan per barang, termasuk baris dobel.
+    $dipakai = [];
+    foreach ($items as $item) {
+        $dipakai[$item['idbarang']] = ($dipakai[$item['idbarang']] ?? 0) + $item['jumlah'];
+    }
+
+    foreach ($dipakai as $id => $n) {
+        $sisa = $stokBarang[$id] ?? 0;
+        if ($n > $sisa) {
+            $namaItem = 'Barang';
+            foreach ($barang as $b) {
+                if ((int) $b['idbarang'] === (int) $id) {
+                    $namaItem = $b['nama'];
+                    break;
+                }
+            }
+            $errors[] = $namaItem . ' stok tersedia ' . $sisa . ', tetapi diminta ' . $n . '.';
+        }
     }
 
     if (!$errors) {
         try {
-            catat_query(
-                "CALL sp_tambah_penjualan(?, ?, ?, ?)",
-                [id_user(), $idmargin, $idbarang, $jumlah]
-            );
+            $pdo->beginTransaction();
 
-            $stmt = $pdo->prepare("CALL sp_tambah_penjualan(?, ?, ?, ?)");
-            $stmt->execute([id_user(), $idmargin, $idbarang, $jumlah]);
-            $hasil = $stmt->fetch();
-            $stmt->closeCursor();
+            $subtotal = 0;
+            $hitung   = [];
 
-            if (!$hasil) {
-                throw new RuntimeException('Transaksi tidak dapat diselesaikan.');
+            foreach ($items as $item) {
+                $id = $item['idbarang'];
+
+                $hargaDasar = $hargaBarang[$id] ?? 0;
+                $hargaJual  = (int) round($hargaDasar + ($hargaDasar * $persenAuto / 100));
+                $sub        = $hargaJual * $item['jumlah'];
+
+                $hitung[] = ['harga_jual' => $hargaJual, 'sub' => $sub];
+                $subtotal += $sub;
             }
+
+            $ppn   = (int) round($subtotal * 0.11);
+            $total = $subtotal + $ppn;
+
+            db_exec(
+                "INSERT INTO penjualan
+                    (subtotal_nilai, ppn, total_nilai, iduser, idmargin_penjualan)
+                 VALUES (?, ?, ?, ?, ?)",
+                [$subtotal, $ppn, $total, id_user(), $idmarginAuto]
+            );
+            $idPenjualan = db_insert_id();
+
+            foreach ($items as $i => $item) {
+                db_exec(
+                    "INSERT INTO detail_penjualan
+                        (harga_satuan, jumlah, subtotal, penjualan_idpenjualan, idbarang)
+                     VALUES (?, ?, ?, ?, ?)",
+                    [$hitung[$i]['harga_jual'], $item['jumlah'], $hitung[$i]['sub'], $idPenjualan, $item['idbarang']]
+                );
+            }
+
+            $pdo->commit();
 
             flash(
                 'sukses',
-                'Penjualan #' . $hasil['id_penjualan'] . ' berhasil diproses. Total ' . rupiah($hasil['total_pembayaran']) . '.'
+                'Penjualan #' . $idPenjualan . ' berhasil diproses. Total ' . rupiah($total) . '.'
             );
-            redirect_dengan_log('penjualan_detail.php?id=' . (int) $hasil['id_penjualan']);
+            redirect_dengan_log('penjualan_detail.php?id=' . $idPenjualan);
         } catch (PDOException $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
             $errorTrigger = pesan_db($e);
-        } catch (RuntimeException $e) {
-            $errorTrigger = $e->getMessage();
         }
     }
 }
@@ -79,8 +146,9 @@ require __DIR__ . '/inc/header.php';
 <div class="panel">
     <h2>Transaksi Penjualan</h2>
     <p><small>
-        Harga jual dihitung dari harga dasar ditambah margin yang sedang aktif, lalu dikenakan PPN 11%.
-        Margin dipilih otomatis. Stok akan otomatis berkurang setelah transaksi disimpan.
+        Harga jual dihitung otomatis dari harga dasar ditambah margin yang aktif, lalu dikenakan PPN 11%.
+        Gunakan <b>+ Tambah Barang</b> untuk membeli beberapa barang dalam satu transaksi.
+        Stok akan otomatis berkurang setelah transaksi disimpan.
     </small></p>
 
     <?php foreach ($errors as $pesan): ?>
@@ -99,42 +167,70 @@ require __DIR__ . '/inc/header.php';
 
     <form method="post" action="penjualan_tambah.php">
         <div class="form-grid">
-            <div style="grid-column:1/-1">
-                <label for="idbarang">Barang</label>
-                <select id="idbarang" name="idbarang" required onchange="hitung()">
-                    <option value="">- pilih barang -</option>
-                    <?php foreach ($barang as $b): ?>
-                        <option value="<?= (int) $b['idbarang'] ?>"
-                                data-harga="<?= (int) $b['harga'] ?>"
-                                data-stok="<?= (int) $b['stok'] ?>"
-                                data-nama="<?= e($b['nama']) ?>"
-                                <?= $idbarang === (int) $b['idbarang'] ? 'selected' : '' ?>>
-                            <?= e($b['nama']) ?> &middot; stok <?= (int) $b['stok'] ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-
             <div>
-                <label for="idmargin">Margin <span class="teks-otomatis">otomatis</span></label>
-                <input type="text" id="tampilan_margin" readonly tabindex="-1"
+                <label>Margin <span class="teks-otomatis">otomatis</span></label>
+                <input type="text" readonly tabindex="-1"
                        value="<?= $marginAuto ? e((float) $marginAuto['persen'] . ' %') : 'Belum ada margin aktif' ?>">
                 <input type="hidden" name="idmargin" value="<?= (int) $idmarginAuto ?>">
                 <small class="hint-otomatis">Margin diambil dari margin yang berstatus aktif.</small>
             </div>
-
             <div>
-                <label for="jumlah">Jumlah</label>
-                <input type="number" id="jumlah" name="jumlah" min="1"
-                       value="<?= e($jumlah > 0 ? $jumlah : 1) ?>" required onchange="hitung()" oninput="hitung()">
+                <label>Dibuat Oleh</label>
+                <input type="text" value="<?= e(nama_user() . ' (' . nama_role() . ')') ?>" disabled>
             </div>
+        </div>
+
+        <h3 class="mt">Daftar Barang</h3>
+        <div class="tabel-wrap">
+            <table id="tabelItem">
+                <thead>
+                    <tr>
+                        <th>Barang</th>
+                        <th class="angka">Harga Jual</th>
+                        <th class="angka">Stok</th>
+                        <th class="angka">Jumlah</th>
+                        <th class="angka">Subtotal</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="baris-item">
+                        <td>
+                            <select name="baris[0][idbarang]" class="pilih-barang" onchange="isiHarga(this)">
+                                <option value="">- pilih barang -</option>
+                                <?php foreach ($barang as $b): ?>
+                                    <?php $stok = (int) $b['stok']; ?>
+                                    <option value="<?= (int) $b['idbarang'] ?>"
+                                            data-harga="<?= (int) $b['harga'] ?>"
+                                            data-stok="<?= $stok ?>"
+                                            <?= $stok <= 0 ? 'disabled' : '' ?>>
+                                        <?= e($b['nama']) ?> (<?= rupiah($b['harga']) ?><?= $stok <= 0 ? ' · habis' : '' ?>)
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </td>
+                        <td class="angka harga-jual-baris">Rp 0</td>
+                        <td class="angka stok-baris">-</td>
+                        <td class="angka">
+                            <input type="number" name="baris[0][jumlah]" class="input-jumlah"
+                                   min="1" max="1" value="1"
+                                   onchange="hitungTotal()" oninput="hitungTotal()">
+                        </td>
+                        <td class="angka subtotal-baris">Rp 0</td>
+                        <td><button type="button" class="btn btn-kecil btn-merah" onclick="hapusBaris(this)">X</button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="form-aksi">
+            <button type="button" class="btn btn-outline" onclick="tambahBaris()">+ Tambah Barang</button>
         </div>
 
         <div class="panel-putih panel mt">
             <div class="info-baris">
-                <span>Harga dasar: <b id="infoHarga">Rp 0</b></span>
-                <span>Stok tersedia: <b id="infoStok">-</b></span>
-                <span>Harga setelah margin: <b id="infoJual">Rp 0</b></span>
+                <span>Margin: <b><?= $marginAuto ? e((float) $marginAuto['persen'] . '%') : '-' ?></b></span>
+                <span>PPN 11%</span>
             </div>
             <div class="teks-kanan">
                 <div>Subtotal: <b id="teksSubtotal">Rp 0</b></div>
@@ -151,40 +247,86 @@ require __DIR__ . '/inc/header.php';
 </div>
 
 <script>
+let nomorBaris = 1;
+const MARGIN_PERSEN = <?= json_encode($persenAuto) ?>;
+
 function rupiah(n) {
     return 'Rp ' + Number(n || 0).toLocaleString('id-ID');
 }
 
-const MARGIN_PERSEN = <?= json_encode($marginAuto ? (float) $marginAuto['persen'] : 0) ?>;
+function isiHarga(select) {
+    const baris = select.closest('.baris-item');
+    const opsi = select.options[select.selectedIndex];
+    const harga = opsi ? Number(opsi.dataset.harga || 0) : 0;
+    const stok = opsi ? Number(opsi.dataset.stok || 0) : 0;
 
-function hitung() {
-    const pilihBarang = document.getElementById('idbarang');
-    const jumlah = Number(document.getElementById('jumlah').value || 0);
+    baris.querySelector('.stok-baris').textContent = stok > 0 ? stok : '-';
 
-    let harga = 0;
-    let stok = '-';
+    const jumlah = baris.querySelector('.input-jumlah');
+    jumlah.setAttribute('max', stok > 0 ? stok : 1);
+    jumlah.value = Math.max(1, Math.min(Number(jumlah.value || 1), stok > 0 ? stok : 1));
 
-    if (pilihBarang.value) {
-        const ob = pilihBarang.options[pilihBarang.selectedIndex];
-        harga = Number(ob.dataset.harga || 0);
-        stok = ob.dataset.stok || '-';
+    hitungTotal();
+}
+
+function tambahBaris() {
+    const tbody = document.querySelector('#tabelItem tbody');
+    const awal = tbody.querySelector('.baris-item');
+    const baru = awal.cloneNode(true);
+    const n = nomorBaris++;
+
+    baru.querySelector('.pilih-barang').name = 'baris[' + n + '][idbarang]';
+    baru.querySelector('.pilih-barang').selectedIndex = 0;
+    baru.querySelector('.input-jumlah').name = 'baris[' + n + '][jumlah]';
+    baru.querySelector('.input-jumlah').value = 1;
+    baru.querySelector('.input-jumlah').setAttribute('max', 1);
+    baru.querySelector('.harga-jual-baris').textContent = 'Rp 0';
+    baru.querySelector('.stok-baris').textContent = '-';
+    baru.querySelector('.subtotal-baris').textContent = 'Rp 0';
+
+    tbody.appendChild(baru);
+    hitungTotal();
+}
+
+function hapusBaris(btn) {
+    const semua = document.querySelectorAll('.baris-item');
+    if (semua.length <= 1) {
+        return;
     }
+    btn.closest('.baris-item').remove();
+    hitungTotal();
+}
 
-    const persen = MARGIN_PERSEN;
+function hitungTotal() {
+    let subtotal = 0;
 
-    const hargaJual = Math.round(harga + (harga * persen / 100));
-    const subtotal = hargaJual * jumlah;
+    document.querySelectorAll('.baris-item').forEach(function (baris) {
+        const select = baris.querySelector('.pilih-barang');
+        const opsi = select.options[select.selectedIndex];
+        const hargaDasar = opsi ? Number(opsi.dataset.harga || 0) : 0;
+        const stok = opsi ? Number(opsi.dataset.stok || 0) : 0;
+
+        const jumlah = Number(baris.querySelector('.input-jumlah').value || 0);
+        const hargaJual = Math.round(hargaDasar + (hargaDasar * MARGIN_PERSEN / 100));
+        const sub = hargaJual * jumlah;
+
+        baris.querySelector('.harga-jual-baris').textContent = rupiah(hargaJual);
+        baris.querySelector('.subtotal-baris').textContent = rupiah(sub);
+        subtotal += sub;
+
+        const input = baris.querySelector('.input-jumlah');
+        if (stok > 0 && jumlah > stok) {
+            input.value = stok;
+        }
+    });
+
     const ppn = Math.round(subtotal * 0.11);
-
-    document.getElementById('infoHarga').textContent = rupiah(harga);
-    document.getElementById('infoStok').textContent = stok;
-    document.getElementById('infoJual').textContent = rupiah(hargaJual) + ' (' + persen + '%)';
     document.getElementById('teksSubtotal').textContent = rupiah(subtotal);
     document.getElementById('teksPpn').textContent = rupiah(ppn);
     document.getElementById('teksTotal').textContent = rupiah(subtotal + ppn);
 }
 
-hitung();
+hitungTotal();
 </script>
 
 <?php require __DIR__ . '/inc/footer.php'; ?>
