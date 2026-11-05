@@ -2,16 +2,24 @@
 require_once __DIR__ . '/inc/auth.php';
 cek_role([1, 2]);
 
-$vendor = db_all("SELECT idvendor, nama_vendor FROM vendor WHERE status = 'A' ORDER BY nama_vendor");
+$vendorAuto = db_one(
+    "SELECT v.idvendor, v.nama_vendor,
+            (SELECT COUNT(*) FROM pengadaan p WHERE p.vendor_idvendor = v.idvendor) AS jumlah_pengadaan
+     FROM vendor v
+     WHERE v.status = 'A'
+     ORDER BY jumlah_pengadaan DESC, v.nama_vendor ASC
+     LIMIT 1"
+);
+$vendorIdDefault = $vendorAuto ? (int) $vendorAuto['idvendor'] : 0;
 $barang = db_all("SELECT idbarang, nama, harga FROM barang WHERE status = 1 ORDER BY nama");
 
 $errors = [];
-$vendorId = (int) ($_POST['vendor_idvendor'] ?? 0);
+$vendorId = (int) ($_POST['vendor_idvendor'] ?? $vendorIdDefault);
 $baris = $_POST['baris'] ?? [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($vendorId <= 0) {
-        $errors[] = 'Vendor wajib dipilih.';
+        $errors[] = 'Vendor otomatis belum tersedia.';
     }
 
     $items = [];
@@ -102,18 +110,18 @@ require __DIR__ . '/inc/header.php';
         <div class="alert alert-error"><?= e($pesan) ?></div>
     <?php endforeach; ?>
 
+    <?php if (!$vendorAuto): ?>
+        <div class="alert alert-error">Belum ada vendor aktif. Aktifkan vendor di menu Data Vendor.</div>
+    <?php endif; ?>
+
     <form method="post" action="pengadaan_tambah.php">
         <div class="form-grid">
             <div>
-                <label for="vendor">Vendor</label>
-                <select id="vendor" name="vendor_idvendor" required>
-                    <option value="">- pilih vendor -</option>
-                    <?php foreach ($vendor as $v): ?>
-                        <option value="<?= (int) $v['idvendor'] ?>" <?= $vendorId === (int) $v['idvendor'] ? 'selected' : '' ?>>
-                            <?= e($v['nama_vendor']) ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
+                <label for="vendor">Vendor <span class="teks-otomatis">otomatis</span></label>
+                <input type="text" id="vendor" tabindex="-1" readonly
+                       value="<?= $vendorAuto ? e($vendorAuto['nama_vendor']) : 'Belum ada vendor aktif' ?>">
+                <input type="hidden" name="vendor_idvendor" value="<?= (int) $vendorIdDefault ?>">
+                <small class="hint-otomatis">Dipilih otomatis berdasarkan vendor aktif yang paling sering dipakai.</small>
             </div>
             <div>
                 <label>Dibuat Oleh</label>
@@ -171,7 +179,7 @@ require __DIR__ . '/inc/header.php';
         </div>
 
         <div class="form-aksi">
-            <button type="submit" class="btn">Simpan Pengadaan</button>
+            <button type="submit" class="btn" <?= !$vendorAuto ? 'disabled' : '' ?>>Simpan Pengadaan</button>
             <a class="btn btn-outline" href="pengadaan.php">Batal</a>
         </div>
     </form>

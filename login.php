@@ -65,10 +65,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <div class="login-wrap">
     <div class="login-kotak">
         <div class="brand">
-            <div class="logo">SV</div>
+            <div class="logo"><?php include __DIR__ . '/inc/logo_spider.php'; ?></div>
             <div>
                 <b>SPIDEYVERSE</b>
-                <small class="brand-sub">Sistem Persediaan Barang</small>
             </div>
         </div>
 

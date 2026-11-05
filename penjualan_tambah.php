@@ -14,15 +14,18 @@ $barang = db_all(
      ORDER BY b.nama"
 );
 
-$margin = db_all(
+$marginAuto = db_one(
     "SELECT idmargin_penjualan, persen
      FROM margin_penjualan
      WHERE status = 1
-     ORDER BY idmargin_penjualan"
+     ORDER BY idmargin_penjualan
+     LIMIT 1"
 );
 
+$idmarginAuto = $marginAuto ? (int) $marginAuto['idmargin_penjualan'] : 0;
+
 $idbarang = (int) ($_POST['idbarang'] ?? 0);
-$idmargin = (int) ($_POST['idmargin'] ?? 0);
+$idmargin = (int) ($_POST['idmargin'] ?? $idmarginAuto);
 $jumlah   = (int) ($_POST['jumlah'] ?? 1);
 
 /* =====================================================
@@ -76,8 +79,8 @@ require __DIR__ . '/inc/header.php';
 <div class="panel">
     <h2>Transaksi Penjualan</h2>
     <p><small>
-        Harga jual dihitung dari harga dasar ditambah margin, lalu dikenakan PPN 11%.
-        Stok akan otomatis berkurang setelah transaksi disimpan.
+        Harga jual dihitung dari harga dasar ditambah margin yang sedang aktif, lalu dikenakan PPN 11%.
+        Margin dipilih otomatis. Stok akan otomatis berkurang setelah transaksi disimpan.
     </small></p>
 
     <?php foreach ($errors as $pesan): ?>
@@ -90,8 +93,8 @@ require __DIR__ . '/inc/header.php';
         </div>
     <?php endif; ?>
 
-    <?php if (!$margin): ?>
-        <div class="alert alert-error">Tidak ada margin aktif. Aktifkan margin dulu di menu Margin Penjualan.</div>
+    <?php if (!$marginAuto): ?>
+        <div class="alert alert-error">Belum ada margin aktif. Aktifkan margin di menu Margin Penjualan.</div>
     <?php endif; ?>
 
     <form method="post" action="penjualan_tambah.php">
@@ -113,17 +116,11 @@ require __DIR__ . '/inc/header.php';
             </div>
 
             <div>
-                <label for="idmargin">Margin</label>
-                <select id="idmargin" name="idmargin" required onchange="hitung()">
-                    <option value="">- pilih margin -</option>
-                    <?php foreach ($margin as $m): ?>
-                        <option value="<?= (int) $m['idmargin_penjualan'] ?>"
-                                data-persen="<?= (float) $m['persen'] ?>"
-                                <?= $idmargin === (int) $m['idmargin_penjualan'] ? 'selected' : '' ?>>
-                            <?= (float) $m['persen'] ?> %
-                        </option>
-                    <?php endforeach; ?>
-                </select>
+                <label for="idmargin">Margin <span class="teks-otomatis">otomatis</span></label>
+                <input type="text" id="tampilan_margin" readonly tabindex="-1"
+                       value="<?= $marginAuto ? e((float) $marginAuto['persen'] . ' %') : 'Belum ada margin aktif' ?>">
+                <input type="hidden" name="idmargin" value="<?= (int) $idmarginAuto ?>">
+                <small class="hint-otomatis">Margin diambil dari margin yang berstatus aktif.</small>
             </div>
 
             <div>
@@ -147,7 +144,7 @@ require __DIR__ . '/inc/header.php';
         </div>
 
         <div class="form-aksi">
-            <button type="submit" class="btn" <?= !$margin ? 'disabled' : '' ?>>Proses Penjualan</button>
+            <button type="submit" class="btn" <?= !$marginAuto ? 'disabled' : '' ?>>Proses Penjualan</button>
             <a class="btn btn-outline" href="penjualan.php">Riwayat</a>
         </div>
     </form>
@@ -158,9 +155,10 @@ function rupiah(n) {
     return 'Rp ' + Number(n || 0).toLocaleString('id-ID');
 }
 
+const MARGIN_PERSEN = <?= json_encode($marginAuto ? (float) $marginAuto['persen'] : 0) ?>;
+
 function hitung() {
     const pilihBarang = document.getElementById('idbarang');
-    const pilihMargin = document.getElementById('idmargin');
     const jumlah = Number(document.getElementById('jumlah').value || 0);
 
     let harga = 0;
@@ -172,11 +170,7 @@ function hitung() {
         stok = ob.dataset.stok || '-';
     }
 
-    let persen = 0;
-    if (pilihMargin.value) {
-        const om = pilihMargin.options[pilihMargin.selectedIndex];
-        persen = Number(om.dataset.persen || 0);
-    }
+    const persen = MARGIN_PERSEN;
 
     const hargaJual = Math.round(harga + (harga * persen / 100));
     const subtotal = hargaJual * jumlah;

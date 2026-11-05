@@ -162,6 +162,8 @@ spideyverse/
 ## Catatan Tampilan
 
 - Setiap proses berhasil menampilkan **popup notifikasi** dengan tombol **OK**; popup tidak menutup sendiri.
+- Margin penjualan dipilih otomatis dari margin yang berstatus aktif.
+- Vendor pengadaan dipilih otomatis berdasarkan vendor aktif yang paling sering dipakai.
 - Panel, kartu, dan tabel memakai latar putih bersih dengan garis halus, cocok untuk suasana kantoran.
 - Tombol menampilkan bayangan tebal khas tombol fisik; saat ditekan, tombol tenggelam mendekati panel.
 - Efek kilau muncul pada tombol utama dan tombol OK di popup.

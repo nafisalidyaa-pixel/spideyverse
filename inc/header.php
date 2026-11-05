@@ -84,10 +84,9 @@ if ($role === 1) {
 <div class="app">
     <aside class="sidebar">
         <div class="brand">
-            <div class="logo">SV</div>
+            <div class="logo"><?php include __DIR__ . '/logo_spider.php'; ?></div>
             <div>
                 <b>SPIDEYVERSE</b>
-                <small class="brand-sub">Sistem Persediaan Barang</small>
             </div>
         </div>
 

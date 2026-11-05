@@ -45,7 +45,7 @@ require __DIR__ . '/inc/header.php';
     <div class="struk">
         <div class="struk-kepala">
             <div class="struk-brand">
-                <div class="logo">SV</div>
+                <div class="logo"><?php include __DIR__ . '/inc/logo_spider.php'; ?></div>
                 <div>
                     <b>SPIDEYVERSE</b>
                     <small>Bukti Transaksi</small>
