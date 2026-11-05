@@ -1,0 +1,29 @@
+# Sistem operasi
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Berkas sementara dan log
+*.log
+*.tmp
+*.bak
+*.swp
+screenshots/
+
+# Dependensi (jika ditambahkan di kemudian hari)
+vendor/
+node_modules/
+
+# Konfigurasi lokal
+.env
+.env.local
+
+# Arsip
+*.zip
+*.rar
