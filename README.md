@@ -2,7 +2,7 @@
 
 Aplikasi web persediaan barang **SpideyVerse** menggunakan **PHP 8 native + PDO + SQL mentah (tanpa framework / ORM)** dan database MySQL 8.0 (`spideyverse`) yang dikelola lewat HeidiSQL / Laragon.
 
-Tema tampilan: **latar pink dengan seluruh tulisan putih** dan tombol bergaya profesional.
+Tema tampilan: **enterprise pink premium** — sidebar wine gelap, area kerja blush lembut, panel putih bersih, tabel rapi, dan tombol aksen rose.
 
 ---
 
@@ -162,10 +162,12 @@ spideyverse/
 ## Catatan Tampilan
 
 - Setiap proses berhasil menampilkan **popup notifikasi** dengan tombol **OK**; popup tidak menutup sendiri.
+- Panel, kartu, dan tabel memakai latar putih bersih dengan garis halus, cocok untuk suasana kantoran.
 - Tombol menampilkan bayangan tebal khas tombol fisik; saat ditekan, tombol tenggelam mendekati panel.
 - Efek kilau muncul pada tombol utama dan tombol OK di popup.
 - Tombol submit menampilkan status **Memproses...** saat form dikirim.
 - Bukti transaksi ditampilkan sebagai kartu invoice dengan badge **Lunas**.
+- Tidak ada menu mencetak pada aplikasi ini.
 
 ---
 

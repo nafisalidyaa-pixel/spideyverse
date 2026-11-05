@@ -68,6 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="logo">SV</div>
             <div>
                 <b>SPIDEYVERSE</b>
+                <small class="brand-sub">Sistem Persediaan Barang</small>
             </div>
         </div>
 
