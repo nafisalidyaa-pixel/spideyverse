@@ -18,11 +18,8 @@ function master_config(string $key): array
             'edit_roles' => [1],
             'cari'     => ['b.nama', 'b.idbarang'],
             'filter_jenis' => true,
-            'list_sql' => "SELECT b.idbarang, b.jenis, b.nama, s.nama_satuan, b.status, b.harga,
-                                  COALESCE((SELECT SUM(k.masuk - k.keluar) FROM kartu_stok k
-                                            WHERE k.idbarang = b.idbarang), 0) AS stok
-                           FROM barang b
-                           JOIN satuan s ON s.idsatuan = b.idsatuan",
+            'list_sql' => "SELECT b.idbarang, b.jenis, b.nama, b.nama_satuan, b.status, b.harga, b.stok
+                           FROM v_barang b",
             'order_sql' => " ORDER BY b.jenis, b.idbarang",
             'kolom'    => [
                 ['label' => 'ID', 'key' => 'idbarang'],
@@ -55,9 +52,8 @@ function master_config(string $key): array
             'pk'       => 'idsatuan',
             'roles'    => [1, 2],
             'edit_roles' => [1],
-            'list_sql' => "SELECT s.idsatuan, s.nama_satuan, s.status,
-                                  (SELECT COUNT(*) FROM barang b WHERE b.idsatuan = s.idsatuan) AS dipakai
-                           FROM satuan s",
+            'list_sql' => "SELECT s.idsatuan, s.nama_satuan, s.status, s.jumlah_barang AS dipakai
+                           FROM v_satuan s",
             'order_sql' => " ORDER BY s.idsatuan",
             'kolom'    => [
                 ['label' => 'ID', 'key' => 'idsatuan'],
@@ -80,9 +76,8 @@ function master_config(string $key): array
             'pk'       => 'idvendor',
             'roles'    => [1, 2],
             'edit_roles' => [1],
-            'list_sql' => "SELECT v.idvendor, v.nama_vendor, v.badan_hukum, v.status,
-                                  (SELECT COUNT(*) FROM pengadaan p WHERE p.vendor_idvendor = v.idvendor) AS dipakai
-                           FROM vendor v",
+            'list_sql' => "SELECT v.idvendor, v.nama_vendor, v.badan_hukum, v.status, v.jumlah_pengadaan AS dipakai
+                           FROM v_vendor v",
             'order_sql' => " ORDER BY v.idvendor",
             'kolom'    => [
                 ['label' => 'ID', 'key' => 'idvendor'],
@@ -110,9 +105,8 @@ function master_config(string $key): array
             'pk'       => 'idrole',
             'roles'    => [1],
             'edit_roles' => [1],
-            'list_sql' => "SELECT r.idrole, r.nama_role,
-                                  (SELECT COUNT(*) FROM `user` u WHERE u.idrole = r.idrole) AS jumlah_user
-                           FROM `role` r",
+            'list_sql' => "SELECT r.idrole, r.nama_role, r.jumlah_user
+                           FROM v_role r",
             'order_sql' => " ORDER BY r.idrole",
             'kolom'    => [
                 ['label' => 'ID', 'key' => 'idrole'],
@@ -133,10 +127,8 @@ function master_config(string $key): array
             'roles'    => [1],
             'edit_roles' => [1],
             'cari'     => ['u.username'],
-            'list_sql' => "SELECT u.iduser, u.username, u.password, u.idrole, r.nama_role,
-                                  (SELECT COUNT(*) FROM penjualan p WHERE p.iduser = u.iduser) AS jumlah_penjualan
-                           FROM `user` u
-                           JOIN `role` r ON r.idrole = u.idrole",
+            'list_sql' => "SELECT u.iduser, u.username, u.idrole, u.nama_role, u.jumlah_penjualan
+                           FROM v_user u",
             'order_sql' => " ORDER BY u.iduser",
             'kolom'    => [
                 ['label' => 'ID', 'key' => 'iduser'],
@@ -170,12 +162,9 @@ function master_config(string $key): array
             'pk'       => 'idmargin_penjualan',
             'roles'    => [1],
             'edit_roles' => [1],
-            'list_sql' => "SELECT m.idmargin_penjualan, m.persen, m.status, m.iduser, u.username,
-                                  (SELECT COUNT(*) FROM penjualan p
-                                   WHERE p.idmargin_penjualan = m.idmargin_penjualan) AS dipakai,
-                                  m.created_at, m.updated_at
-                           FROM margin_penjualan m
-                           JOIN `user` u ON u.iduser = m.iduser",
+            'list_sql' => "SELECT m.idmargin_penjualan, m.persen, m.status, m.username,
+                                  m.jumlah_penjualan AS dipakai, m.created_at, m.updated_at
+                           FROM v_margin_penjualan m",
             'order_sql' => " ORDER BY m.idmargin_penjualan",
             'kolom'    => [
                 ['label' => 'ID', 'key' => 'idmargin_penjualan'],

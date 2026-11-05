@@ -6,26 +6,17 @@ $errors = [];
 $errorTrigger = '';
 
 $barang = db_all(
-    "SELECT b.idbarang, b.nama, b.jenis, b.harga,
-            COALESCE((SELECT SUM(k.masuk - k.keluar) FROM kartu_stok k
-                      WHERE k.idbarang = b.idbarang), 0) AS stok
-     FROM barang b
-     WHERE b.status = 1
-     ORDER BY b.nama"
+    "SELECT v.idbarang, v.nama, v.jenis, v.harga, v.stok
+     FROM v_barang v
+     WHERE v.status = 1
+     ORDER BY v.nama"
 );
 
-$stokBarang  = [];
-$hargaBarang = [];
-foreach ($barang as $b) {
-    $stokBarang[(int) $b['idbarang']]  = (int) $b['stok'];
-    $hargaBarang[(int) $b['idbarang']] = (int) $b['harga'];
-}
-
 $marginAuto = db_one(
-    "SELECT idmargin_penjualan, persen
-     FROM margin_penjualan
-     WHERE status = 1
-     ORDER BY idmargin_penjualan
+    "SELECT m.idmargin_penjualan, m.persen
+     FROM v_margin_penjualan m
+     WHERE m.status = 1
+     ORDER BY m.idmargin_penjualan
      LIMIT 1"
 );
 
@@ -36,7 +27,7 @@ $baris = $_POST['baris'] ?? [];
 
 /* =====================================================
    PROSES PENJUALAN: KERANJANG (BANYAK BARANG)
-   Dijalankan dalam satu transaksi.
+   Seluruh validasi & perhitungan berjalan di database.
 ===================================================== */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $items = [];
@@ -64,75 +55,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = 'Minimal satu barang harus diisi.';
     }
 
-    // Stok dihitung gabungan per barang, termasuk baris dobel.
-    $dipakai = [];
-    foreach ($items as $item) {
-        $dipakai[$item['idbarang']] = ($dipakai[$item['idbarang']] ?? 0) + $item['jumlah'];
-    }
-
-    foreach ($dipakai as $id => $n) {
-        $sisa = $stokBarang[$id] ?? 0;
-        if ($n > $sisa) {
-            $namaItem = 'Barang';
-            foreach ($barang as $b) {
-                if ((int) $b['idbarang'] === (int) $id) {
-                    $namaItem = $b['nama'];
-                    break;
-                }
-            }
-            $errors[] = $namaItem . ' stok tersedia ' . $sisa . ', tetapi diminta ' . $n . '.';
-        }
-    }
-
     if (!$errors) {
         try {
-            $pdo->beginTransaction();
-
-            $subtotal = 0;
-            $hitung   = [];
-
-            foreach ($items as $item) {
-                $id = $item['idbarang'];
-
-                $hargaDasar = $hargaBarang[$id] ?? 0;
-                $hargaJual  = (int) round($hargaDasar + ($hargaDasar * $persenAuto / 100));
-                $sub        = $hargaJual * $item['jumlah'];
-
-                $hitung[] = ['harga_jual' => $hargaJual, 'sub' => $sub];
-                $subtotal += $sub;
-            }
-
-            $ppn   = (int) round($subtotal * 0.11);
-            $total = $subtotal + $ppn;
-
-            db_exec(
-                "INSERT INTO penjualan
-                    (subtotal_nilai, ppn, total_nilai, iduser, idmargin_penjualan)
-                 VALUES (?, ?, ?, ?, ?)",
-                [$subtotal, $ppn, $total, id_user(), $idmarginAuto]
+            catat_query(
+                'CALL sp_tambah_penjualan_keranjang(?, ?, ?)',
+                [id_user(), $idmarginAuto, json_encode($items)]
             );
-            $idPenjualan = db_insert_id();
 
-            foreach ($items as $i => $item) {
-                db_exec(
-                    "INSERT INTO detail_penjualan
-                        (harga_satuan, jumlah, subtotal, penjualan_idpenjualan, idbarang)
-                     VALUES (?, ?, ?, ?, ?)",
-                    [$hitung[$i]['harga_jual'], $item['jumlah'], $hitung[$i]['sub'], $idPenjualan, $item['idbarang']]
-                );
+            $stmt = $pdo->prepare('CALL sp_tambah_penjualan_keranjang(?, ?, ?)');
+            $stmt->execute([id_user(), $idmarginAuto, json_encode($items)]);
+            $hasil = $stmt->fetch();
+            $stmt->closeCursor();
+
+            if (!$hasil) {
+                throw new RuntimeException('Transaksi tidak dapat diselesaikan.');
             }
-
-            $pdo->commit();
 
             flash(
                 'sukses',
-                'Penjualan #' . $idPenjualan . ' berhasil diproses. Total ' . rupiah($total) . '.'
+                'Penjualan #' . $hasil['id_penjualan'] . ' berhasil diproses. Total ' . rupiah($hasil['total_pembayaran']) . '.'
             );
-            redirect_dengan_log('penjualan_detail.php?id=' . $idPenjualan);
+            redirect_dengan_log('penjualan_detail.php?id=' . (int) $hasil['id_penjualan']);
         } catch (PDOException $e) {
-            if ($pdo->inTransaction()) {
-                $pdo->rollBack();
-            }
             $errorTrigger = pesan_db($e);
         }
     }

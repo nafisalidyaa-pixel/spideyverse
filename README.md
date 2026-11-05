@@ -119,7 +119,16 @@ Lalu buka **http://127.0.0.1:8123**.
   - `trg_penjualan_stok` - mengurangi stok saat penjualan
   - `trg_penjualan_validasi_stok` - menolak penjualan jika stok kurang
 - **1 function**: `fn_hitung_subtotal(harga, jumlah)`
-- **1 stored procedure**: `sp_tambah_penjualan(iduser, idmargin, idbarang, jumlah)` (tersimpan di database untuk kompatibilitas dengan kebutuhan tugas, tidak dipakai halaman penjualan)
+- **2 stored procedure**:
+  - `sp_tambah_penjualan(iduser, idmargin, idbarang, jumlah)` - penjualan satu item (warisan modul praktikum)
+  - `sp_tambah_penjualan_keranjang(iduser, idmargin, items JSON)` - penjualan keranjang multi-item; seluruh validasi (barang aktif, margin aktif, stok gabungan), perhitungan harga, subtotal, PPN, dan penyimpanan benar-benar diproses di database
+
+## Pemakaian View di Halaman
+
+- Halaman master **Barang, Satuan, Vendor, Role, User, Margin Penjualan** membaca dari view (`v_barang`, `v_satuan`, `v_vendor`, `v_role`, `v_user`, `v_margin_penjualan`)
+- Dropdown barang pada **Transaksi Penjualan** juga membaca dari `v_barang`
+- Laporan (Kartu Stok, Penjualan, Pengadaan, Retur, Stok) memakai SQL agregasi & `WINDOW FUNCTION` langsung di query
+- Trigger `trg_penjualan_validasi_stok` dan `trg_penjualan_stok` otomatis memvalidasi dan mengurangi stok saat detail penjualan tersimpan
 
 ## View Master
 
@@ -130,9 +139,10 @@ Lalu buka **http://127.0.0.1:8123**.
 | `v_vendor` | Daftar vendor beserta jumlah pengadaan |
 | `v_role` | Daftar role beserta jumlah user |
 | `v_user` | Daftar user dan role tanpa menampilkan password |
-| `v_margin_penjualan` | Daftar margin penjualan, status, dan user pembuat |
+| `v_margin_penjualan` | Daftar margin penjualan, status, user pembuat, dan jumlah pemakaian |
 
-File query tersedia di `database/views_master.sql`. Jalankan file tersebut di HeidiSQL apabila view belum dibuat.
+File query view tersedia di `database/views_master.sql`. Jalankan file tersebut di HeidiSQL apabila view belum dibuat.
+Stored procedure keranjang penjualan tersedia di `database/sp_tambah_penjualan_keranjang.sql`.
 
 ---
 
@@ -143,6 +153,7 @@ spideyverse/
 ├── assets/css/style.css        # Tema pink, popup notifikasi, kartu bukti transaksi
 ├── database/spideyverse.sql    # Ekspor struktur + data + objek database
 ├── database/views_master.sql   # Pembuatan 6 view tabel master untuk HeidiSQL
+├── database/sp_tambah_penjualan_keranjang.sql # SP keranjang penjualan untuk HeidiSQL
 ├── inc/
 │   ├── koneksi.php             # Koneksi PDO
 │   ├── helpers.php             # Escaping, format, query mentah

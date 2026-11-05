@@ -48,6 +48,16 @@ SELECT
     (SELECT COUNT(*) FROM `barang` b WHERE b.`idsatuan` = s.`idsatuan`) AS `jumlah_barang`
 FROM `satuan` s;
 
+-- 2. View master satuan
+CREATE OR REPLACE VIEW `v_satuan` AS
+SELECT
+    s.`idsatuan`,
+    s.`nama_satuan`,
+    s.`status`,
+    CASE WHEN s.`status` = 1 THEN 'Aktif' ELSE 'Nonaktif' END AS `status_satuan`,
+    (SELECT COUNT(*) FROM `barang` b WHERE b.`idsatuan` = s.`idsatuan`) AS `jumlah_barang`
+FROM `satuan` s;
+
 -- 3. View master vendor
 CREATE OR REPLACE VIEW `v_vendor` AS
 SELECT
@@ -78,7 +88,7 @@ SELECT
 FROM `user` u
 LEFT JOIN `role` r ON r.`idrole` = u.`idrole`;
 
--- 6. View master margin penjualan
+-- 6. View master margin penjualan (termasuk jumlah pemakaian)
 CREATE OR REPLACE VIEW `v_margin_penjualan` AS
 SELECT
     m.`idmargin_penjualan`,
@@ -87,6 +97,8 @@ SELECT
     CASE WHEN m.`status` = 1 THEN 'Aktif' ELSE 'Nonaktif' END AS `status_margin`,
     m.`iduser`,
     u.`username`,
+    (SELECT COUNT(*) FROM `penjualan` p
+     WHERE p.`idmargin_penjualan` = m.`idmargin_penjualan`) AS `jumlah_penjualan`,
     m.`created_at`,
     m.`updated_at`
 FROM `margin_penjualan` m

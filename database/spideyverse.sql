@@ -40,7 +40,7 @@ CREATE TABLE `barang` (
   PRIMARY KEY (`idbarang`),
   KEY `idsatuan` (`idsatuan`),
   CONSTRAINT `barang_ibfk_1` FOREIGN KEY (`idsatuan`) REFERENCES `satuan` (`idsatuan`)
-) ENGINE=InnoDB AUTO_INCREMENT=51 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=54 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -145,7 +145,7 @@ CREATE TABLE `detail_pengadaan` (
   KEY `idpengadaan` (`idpengadaan`),
   CONSTRAINT `detail_pengadaan_ibfk_1` FOREIGN KEY (`idbarang`) REFERENCES `barang` (`idbarang`),
   CONSTRAINT `detail_pengadaan_ibfk_2` FOREIGN KEY (`idpengadaan`) REFERENCES `pengadaan` (`idpengadaan`)
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -154,7 +154,7 @@ CREATE TABLE `detail_pengadaan` (
 
 LOCK TABLES `detail_pengadaan` WRITE;
 /*!40000 ALTER TABLE `detail_pengadaan` DISABLE KEYS */;
-INSERT INTO `detail_pengadaan` VALUES (1,85000,10,850000,1,1),(2,65000,10,650000,2,1),(3,125000,7,875000,47,2),(4,175000,9,1575000,14,3),(5,175000,30,5250000,31,4),(6,85000,17,1445000,23,5),(7,185000,35,6475000,15,6);
+INSERT INTO `detail_pengadaan` VALUES (1,85000,10,850000,1,1),(2,65000,10,650000,2,1),(3,125000,7,875000,47,2),(4,175000,9,1575000,14,3),(5,175000,30,5250000,31,4),(6,85000,17,1445000,23,5),(7,185000,35,6475000,15,6),(8,65000,20,1300000,43,7);
 /*!40000 ALTER TABLE `detail_pengadaan` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -177,7 +177,7 @@ CREATE TABLE `detail_penjualan` (
   KEY `idbarang` (`idbarang`),
   CONSTRAINT `detail_penjualan_ibfk_1` FOREIGN KEY (`penjualan_idpenjualan`) REFERENCES `penjualan` (`idpenjualan`),
   CONSTRAINT `detail_penjualan_ibfk_2` FOREIGN KEY (`idbarang`) REFERENCES `barang` (`idbarang`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -281,7 +281,7 @@ CREATE TABLE `detail_retur` (
   KEY `iddetail_penerimaan` (`iddetail_penerimaan`),
   CONSTRAINT `detail_retur_ibfk_1` FOREIGN KEY (`idretur`) REFERENCES `retur` (`idretur`),
   CONSTRAINT `detail_retur_ibfk_2` FOREIGN KEY (`iddetail_penerimaan`) REFERENCES `detail_penerimaan` (`iddetail_penerimaan`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -290,7 +290,7 @@ CREATE TABLE `detail_retur` (
 
 LOCK TABLES `detail_retur` WRITE;
 /*!40000 ALTER TABLE `detail_retur` DISABLE KEYS */;
-INSERT INTO `detail_retur` VALUES (1,1,'Barang rusak',1,1),(4,2,'terdapat retakan di bawah tumbler',4,1);
+INSERT INTO `detail_retur` VALUES (1,1,'Barang rusak',1,1),(4,2,'terdapat retakan di bawah tumbler',4,1),(5,1,'ada retakan',5,4);
 /*!40000 ALTER TABLE `detail_retur` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
@@ -387,7 +387,7 @@ CREATE TABLE `kartu_stok` (
   PRIMARY KEY (`idkartu_stok`),
   KEY `idbarang` (`idbarang`),
   CONSTRAINT `kartu_stok_ibfk_1` FOREIGN KEY (`idbarang`) REFERENCES `barang` (`idbarang`)
-) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=27 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -396,7 +396,7 @@ CREATE TABLE `kartu_stok` (
 
 LOCK TABLES `kartu_stok` WRITE;
 /*!40000 ALTER TABLE `kartu_stok` DISABLE KEYS */;
-INSERT INTO `kartu_stok` VALUES (1,'M',10,0,10,'2026-11-04 16:47:48',1,1),(2,'M',10,0,10,'2026-11-04 16:47:48',1,2),(3,'R',0,1,9,'2026-11-04 16:47:48',1,1),(4,'K',0,2,7,'2026-11-04 16:47:48',1,1),(5,'K',0,1,6,'2026-11-04 17:26:46',3,1),(6,'M',7,0,7,'2026-11-04 17:35:27',2,47),(7,'M',9,0,9,'2026-11-05 01:48:53',3,14),(8,'K',0,7,0,'2026-11-05 01:50:03',5,47),(9,'R',0,2,4,'2026-11-05 04:19:39',4,1),(10,'K',0,1,3,'2026-11-05 04:20:58',8,1);
+INSERT INTO `kartu_stok` VALUES (1,'M',10,0,10,'2026-11-04 16:47:48',1,1),(2,'M',10,0,10,'2026-11-04 16:47:48',1,2),(3,'R',0,1,9,'2026-11-04 16:47:48',1,1),(4,'K',0,2,7,'2026-11-04 16:47:48',1,1),(5,'K',0,1,6,'2026-11-04 17:26:46',3,1),(6,'M',7,0,7,'2026-11-04 17:35:27',2,47),(7,'M',9,0,9,'2026-11-05 01:48:53',3,14),(8,'K',0,7,0,'2026-11-05 01:50:03',5,47),(9,'R',0,2,4,'2026-11-05 04:19:39',4,1),(10,'K',0,1,3,'2026-11-05 04:20:58',8,1),(13,'R',0,1,8,'2026-11-05 06:05:38',5,14);
 /*!40000 ALTER TABLE `kartu_stok` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -482,7 +482,7 @@ CREATE TABLE `pengadaan` (
   KEY `vendor_idvendor` (`vendor_idvendor`),
   CONSTRAINT `pengadaan_ibfk_1` FOREIGN KEY (`user_iduser`) REFERENCES `user` (`iduser`),
   CONSTRAINT `pengadaan_ibfk_2` FOREIGN KEY (`vendor_idvendor`) REFERENCES `vendor` (`idvendor`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -491,7 +491,7 @@ CREATE TABLE `pengadaan` (
 
 LOCK TABLES `pengadaan` WRITE;
 /*!40000 ALTER TABLE `pengadaan` DISABLE KEYS */;
-INSERT INTO `pengadaan` VALUES (1,'2026-11-04 16:47:48',2,'A',1,1500000,165000,1665000),(2,'2026-11-04 17:33:41',1,'A',4,875000,96250,971250),(3,'2026-11-05 01:46:00',1,'A',2,1575000,173250,1748250),(4,'2026-11-05 03:37:45',1,'A',2,5250000,577500,5827500),(5,'2026-11-05 03:58:21',1,'A',5,1445000,158950,1603950),(6,'2026-11-05 03:58:39',1,'A',3,6475000,712250,7187250);
+INSERT INTO `pengadaan` VALUES (1,'2026-11-04 16:47:48',2,'A',1,1500000,165000,1665000),(2,'2026-11-04 17:33:41',1,'A',4,875000,96250,971250),(3,'2026-11-05 01:46:00',1,'A',2,1575000,173250,1748250),(4,'2026-11-05 03:37:45',1,'A',2,5250000,577500,5827500),(5,'2026-11-05 03:58:21',1,'A',5,1445000,158950,1603950),(6,'2026-11-05 03:58:39',1,'A',3,6475000,712250,7187250),(7,'2026-11-05 06:03:39',1,'A',4,1300000,143000,1443000);
 /*!40000 ALTER TABLE `pengadaan` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -515,7 +515,7 @@ CREATE TABLE `penjualan` (
   KEY `idmargin_penjualan` (`idmargin_penjualan`),
   CONSTRAINT `penjualan_ibfk_1` FOREIGN KEY (`iduser`) REFERENCES `user` (`iduser`),
   CONSTRAINT `penjualan_ibfk_2` FOREIGN KEY (`idmargin_penjualan`) REFERENCES `margin_penjualan` (`idmargin_penjualan`)
-) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -545,7 +545,7 @@ CREATE TABLE `retur` (
   KEY `iduser` (`iduser`),
   CONSTRAINT `retur_ibfk_1` FOREIGN KEY (`idpenerimaan`) REFERENCES `penerimaan` (`idpenerimaan`),
   CONSTRAINT `retur_ibfk_2` FOREIGN KEY (`iduser`) REFERENCES `user` (`iduser`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -554,7 +554,7 @@ CREATE TABLE `retur` (
 
 LOCK TABLES `retur` WRITE;
 /*!40000 ALTER TABLE `retur` DISABLE KEYS */;
-INSERT INTO `retur` VALUES (1,'2026-11-04 16:47:48',1,2),(4,'2026-11-05 04:19:39',1,2);
+INSERT INTO `retur` VALUES (1,'2026-11-04 16:47:48',1,2),(4,'2026-11-05 04:19:39',1,2),(5,'2026-11-05 06:05:38',3,2);
 /*!40000 ALTER TABLE `retur` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -671,6 +671,7 @@ SET @saved_cs_client     = @@character_set_client;
  1 AS `status_margin`,
  1 AS `iduser`,
  1 AS `username`,
+ 1 AS `jumlah_penjualan`,
  1 AS `created_at`,
  1 AS `updated_at`*/;
 SET character_set_client = @saved_cs_client;
@@ -936,6 +937,169 @@ DELIMITER ;
 /*!50003 SET character_set_client  = @saved_cs_client */ ;
 /*!50003 SET character_set_results = @saved_cs_results */ ;
 /*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `sp_tambah_penjualan_keranjang` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_tambah_penjualan_keranjang`(
+    IN p_iduser INT,
+    IN p_idmargin INT,
+    IN p_items JSON
+)
+BEGIN
+    DECLARE v_persen DOUBLE;
+    DECLARE v_subtotal INT DEFAULT 0;
+    DECLARE v_ppn INT DEFAULT 0;
+    DECLARE v_total INT DEFAULT 0;
+    DECLARE v_idpenjualan INT DEFAULT 0;
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+
+    START TRANSACTION;
+
+    
+    SELECT persen INTO v_persen
+    FROM margin_penjualan
+    WHERE idmargin_penjualan = p_idmargin
+      AND status = 1
+    LIMIT 1;
+
+    IF v_persen IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Margin tidak ditemukan atau tidak aktif';
+    END IF;
+
+    
+    IF p_items IS NULL OR JSON_LENGTH(p_items) = 0 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Minimal satu barang harus diisi';
+    END IF;
+
+    
+    IF EXISTS (
+        SELECT 1
+        FROM JSON_TABLE(
+            p_items,
+            '$[*]'
+            COLUMNS (
+                idbarang INT PATH '$.idbarang',
+                jumlah   INT PATH '$.jumlah'
+            )
+        ) AS jt
+        LEFT JOIN barang b ON b.idbarang = jt.idbarang AND b.status = 1
+        WHERE b.idbarang IS NULL
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Barang tidak ditemukan atau tidak aktif';
+    END IF;
+
+    
+    IF EXISTS (
+        SELECT 1
+        FROM JSON_TABLE(
+            p_items,
+            '$[*]'
+            COLUMNS (
+                idbarang INT PATH '$.idbarang',
+                jumlah   INT PATH '$.jumlah'
+            )
+        ) AS jt
+        WHERE jt.jumlah <= 0
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Jumlah harus lebih dari nol';
+    END IF;
+
+    
+    IF EXISTS (
+        SELECT 1
+        FROM (
+            SELECT jt.idbarang, SUM(jt.jumlah) AS diminta
+            FROM JSON_TABLE(
+                p_items,
+                '$[*]'
+                COLUMNS (
+                    idbarang INT PATH '$.idbarang',
+                    jumlah   INT PATH '$.jumlah'
+                )
+            ) AS jt
+            GROUP BY jt.idbarang
+        ) AS r
+        WHERE COALESCE((
+            SELECT SUM(k.masuk - k.keluar)
+            FROM kartu_stok k
+            WHERE k.idbarang = r.idbarang
+        ), 0) < r.diminta
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Stok barang tidak mencukupi';
+    END IF;
+
+    
+    SELECT SUM(fn_hitung_subtotal(ROUND(b.harga + b.harga * v_persen / 100), jt.jumlah))
+    INTO v_subtotal
+    FROM JSON_TABLE(
+        p_items,
+        '$[*]'
+        COLUMNS (
+            idbarang INT PATH '$.idbarang',
+            jumlah   INT PATH '$.jumlah'
+        )
+    ) AS jt
+    JOIN barang b ON b.idbarang = jt.idbarang;
+
+    SET v_ppn   = ROUND(v_subtotal * 0.11);
+    SET v_total = v_subtotal + v_ppn;
+
+    INSERT INTO penjualan
+        (subtotal_nilai, ppn, total_nilai, iduser, idmargin_penjualan)
+    VALUES
+        (v_subtotal, v_ppn, v_total, p_iduser, p_idmargin);
+
+    SET v_idpenjualan = LAST_INSERT_ID();
+
+    
+    
+    INSERT INTO detail_penjualan
+        (harga_satuan, jumlah, subtotal, penjualan_idpenjualan, idbarang)
+    SELECT ROUND(b.harga + b.harga * v_persen / 100),
+           jt.jumlah,
+           fn_hitung_subtotal(ROUND(b.harga + b.harga * v_persen / 100), jt.jumlah),
+           v_idpenjualan,
+           jt.idbarang
+    FROM JSON_TABLE(
+        p_items,
+        '$[*]'
+        COLUMNS (
+            idbarang INT PATH '$.idbarang',
+            jumlah   INT PATH '$.jumlah'
+        )
+    ) AS jt
+    JOIN barang b ON b.idbarang = jt.idbarang;
+
+    COMMIT;
+
+    SELECT
+        v_idpenjualan AS id_penjualan,
+        v_subtotal    AS subtotal,
+        v_ppn         AS ppn,
+        v_total       AS total_pembayaran;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
 
 --
 -- Current Database: `spideyverse`
@@ -974,7 +1138,7 @@ USE `spideyverse`;
 /*!50001 SET collation_connection      = utf8mb4_0900_ai_ci */;
 /*!50001 CREATE ALGORITHM=UNDEFINED */
 /*!50013 DEFINER=`root`@`localhost` SQL SECURITY DEFINER */
-/*!50001 VIEW `v_margin_penjualan` AS select `m`.`idmargin_penjualan` AS `idmargin_penjualan`,`m`.`persen` AS `persen`,`m`.`status` AS `status`,(case when (`m`.`status` = 1) then 'Aktif' else 'Nonaktif' end) AS `status_margin`,`m`.`iduser` AS `iduser`,`u`.`username` AS `username`,`m`.`created_at` AS `created_at`,`m`.`updated_at` AS `updated_at` from (`margin_penjualan` `m` left join `user` `u` on((`u`.`iduser` = `m`.`iduser`))) */;
+/*!50001 VIEW `v_margin_penjualan` AS select `m`.`idmargin_penjualan` AS `idmargin_penjualan`,`m`.`persen` AS `persen`,`m`.`status` AS `status`,(case when (`m`.`status` = 1) then 'Aktif' else 'Nonaktif' end) AS `status_margin`,`m`.`iduser` AS `iduser`,`u`.`username` AS `username`,(select count(0) from `penjualan` `p` where (`p`.`idmargin_penjualan` = `m`.`idmargin_penjualan`)) AS `jumlah_penjualan`,`m`.`created_at` AS `created_at`,`m`.`updated_at` AS `updated_at` from (`margin_penjualan` `m` left join `user` `u` on((`u`.`iduser` = `m`.`iduser`))) */;
 /*!50001 SET character_set_client      = @saved_cs_client */;
 /*!50001 SET character_set_results     = @saved_cs_results */;
 /*!50001 SET collation_connection      = @saved_col_connection */;
@@ -1060,4 +1224,4 @@ USE `spideyverse`;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-11-05 11:35:39
+-- Dump completed on 2026-11-05 15:41:32
