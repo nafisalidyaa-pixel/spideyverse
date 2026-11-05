@@ -22,7 +22,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $detail = db_one(
             "SELECT dpe.iddetail_penerimaan, dpe.idpenerimaan, dpe.barang_idbarang, dpe.jumlah_terima,
                     COALESCE((SELECT SUM(dr.jumlah) FROM detail_retur dr
-                              WHERE dr.iddetail_penerimaan = dpe.iddetail_penerimaan), 0) AS sudah_retur
+                              WHERE dr.iddetail_penerimaan = dpe.iddetail_penerimaan), 0) AS sudah_retur,
+                    COALESCE((SELECT SUM(k.masuk - k.keluar) FROM kartu_stok k
+                              WHERE k.idbarang = dpe.barang_idbarang), 0) AS stok
              FROM detail_penerimaan dpe
              WHERE dpe.iddetail_penerimaan = ?",
             [$idDetail]
@@ -32,8 +34,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errors[] = 'Data penerimaan tidak ditemukan.';
         } else {
             $sisa = (int) $detail['jumlah_terima'] - (int) $detail['sudah_retur'];
-            if ($jumlah > $sisa) {
-                $errors[] = 'Jumlah retur melebihi sisa yang bisa diretur (' . $sisa . ').';
+            $stok = (int) $detail['stok'];
+            $maks = min($sisa, $stok);
+            if ($jumlah > $maks) {
+                $errors[] = 'Jumlah retur maksimal ' . $maks . ' pcs '
+                    . '(sisa penerimaan ' . $sisa . ', stok tersedia ' . $stok . '). '
+                    . 'Barang yang sudah terjual tidak dapat diretur ke vendor.';
             }
         }
     }
@@ -70,7 +76,9 @@ $pilihan = db_all(
     "SELECT dpe.iddetail_penerimaan, dpe.idpenerimaan, dpe.jumlah_terima,
             b.nama, b.jenis, p.idpengadaan, v.nama_vendor,
             COALESCE((SELECT SUM(dr.jumlah) FROM detail_retur dr
-                      WHERE dr.iddetail_penerimaan = dpe.iddetail_penerimaan), 0) AS sudah_retur
+                      WHERE dr.iddetail_penerimaan = dpe.iddetail_penerimaan), 0) AS sudah_retur,
+            COALESCE((SELECT SUM(k.masuk - k.keluar) FROM kartu_stok k
+                      WHERE k.idbarang = dpe.barang_idbarang), 0) AS stok
      FROM detail_penerimaan dpe
      JOIN barang b ON b.idbarang = dpe.barang_idbarang
      JOIN penerimaan pr ON pr.idpenerimaan = dpe.idpenerimaan
@@ -82,6 +90,7 @@ $pilihan = db_all(
 $pilihan = array_values(array_filter(
     $pilihan,
     fn($d) => ((int) $d['jumlah_terima'] - (int) $d['sudah_retur']) > 0
+        && (int) $d['stok'] > 0
 ));
 
 $JUDUL = 'Buat Retur Baru';
@@ -91,15 +100,16 @@ require __DIR__ . '/inc/header.php';
 
 <div class="panel">
     <h2>Form Retur Barang</h2>
-    <p><small>Stok akan otomatis berkurang setelah retur disimpan. Jumlah retur tidak
-        boleh melebihi jumlah penerimaan atau stok yang tersedia.</small></p>
+    <p><small>Stok akan otomatis berkurang setelah retur disimpan. Jumlah maksimal retur
+        dihitung dari sisa penerimaan dan stok yang tersedia, karena barang yang
+        sudah terjual tidak dapat diretur ke vendor.</small></p>
 
     <?php foreach ($errors as $pesan): ?>
         <div class="alert alert-error"><?= e($pesan) ?></div>
     <?php endforeach; ?>
 
     <?php if (!$pilihan): ?>
-        <div class="alert alert-info">Tidak ada item penerimaan yang masih bisa diretur.</div>
+        <div class="alert alert-info">Tidak ada item penerimaan yang masih bisa diretur, atau stok barang penerimaan sudah habis terjual.</div>
     <?php else: ?>
         <form method="post" action="retur_tambah.php" onsubmit="return cekJumlah()">
             <div class="form-grid">
@@ -108,14 +118,20 @@ require __DIR__ . '/inc/header.php';
                     <select id="pilih" name="iddetail_penerimaan" required onchange="tampilSisa()">
                         <option value="">- pilih barang dari penerimaan -</option>
                         <?php foreach ($pilihan as $d): ?>
-                            <?php $sisa = (int) $d['jumlah_terima'] - (int) $d['sudah_retur']; ?>
+                            <?php
+                            $sisa  = (int) $d['jumlah_terima'] - (int) $d['sudah_retur'];
+                            $stok  = (int) $d['stok'];
+                            $maks  = min($sisa, $stok);
+                            ?>
                             <option value="<?= (int) $d['iddetail_penerimaan'] ?>"
+                                    data-max="<?= $maks ?>"
+                                    data-stok="<?= $stok ?>"
                                     data-sisa="<?= $sisa ?>"
                                     <?= $idDetail === (int) $d['iddetail_penerimaan'] ? 'selected' : '' ?>>
                                 #<?= (int) $d['iddetail_penerimaan'] ?> -
                                 <?= e($d['nama']) ?> |
                                 penerimaan #<?= (int) $d['idpenerimaan'] ?> |
-                                sisa <?= $sisa ?>
+                                maks <?= $maks ?> pcs
                             </option>
                         <?php endforeach; ?>
                     </select>
@@ -124,7 +140,7 @@ require __DIR__ . '/inc/header.php';
                     <label for="jumlah">Jumlah Retur</label>
                     <input type="number" id="jumlah" name="jumlah" min="1"
                            value="<?= e($jumlah > 0 ? $jumlah : 1) ?>" required>
-                    <small id="infoSisa">Sisa yang bisa diretur: -</small>
+                    <small id="infoSisa">Maks. retur: -</small>
                 </div>
                 <div>
                     <label for="alasan">Alasan Retur</label>
@@ -142,23 +158,52 @@ require __DIR__ . '/inc/header.php';
 </div>
 
 <script>
-function tampilSisa() {
+function ambilOpsi() {
     const pilih = document.getElementById('pilih');
-    if (!pilih) return;
-    const opsi = pilih.options[pilih.selectedIndex];
-    const sisa = opsi ? (opsi.dataset.sisa || '-') : '-';
+    if (!pilih || !pilih.value) {
+        return null;
+    }
+    return pilih.options[pilih.selectedIndex];
+}
+
+function tampilSisa() {
+    const opsi = ambilOpsi();
     const info = document.getElementById('infoSisa');
-    if (info) info.textContent = 'Sisa yang bisa diretur: ' + sisa;
+    const input = document.getElementById('jumlah');
+    if (!info) {
+        return;
+    }
+
+    if (!opsi) {
+        info.textContent = 'Maks. retur: -';
+        return;
+    }
+
+    const max = Number(opsi.dataset.max || 0);
+    const sisa = opsi.dataset.sisa || '0';
+    const stok = opsi.dataset.stok || '0';
+
+    info.textContent = 'Sisa penerimaan: ' + sisa + ' pcs · Stok tersedia: ' + stok
+        + ' pcs · Maks. retur: ' + max + ' pcs';
+
+    if (input) {
+        input.setAttribute('max', max);
+        if (Number(input.value || 0) > max) {
+            input.value = max;
+        }
+    }
 }
 
 function cekJumlah() {
-    const pilih = document.getElementById('pilih');
+    const opsi = ambilOpsi();
+    if (!opsi) {
+        return true;
+    }
+    const max = Number(opsi.dataset.max || 0);
     const jumlah = Number(document.getElementById('jumlah').value || 0);
-    if (!pilih || !pilih.value) return true;
-    const opsi = pilih.options[pilih.selectedIndex];
-    const sisa = Number(opsi.dataset.sisa || 0);
-    if (jumlah > sisa) {
-        alert('Jumlah retur melebihi sisa (' + sisa + ').');
+    if (jumlah > max) {
+        alert('Jumlah retur maksimal ' + max + ' pcs '
+            + '(sisa penerimaan ' + opsi.dataset.sisa + ', stok tersedia ' + opsi.dataset.stok + ').');
         return false;
     }
     return true;
