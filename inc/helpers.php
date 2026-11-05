@@ -31,6 +31,25 @@ function tanggal($nilai): string
     return date('d-m-Y H:i', strtotime($nilai));
 }
 
+function tanggal_indonesia(?string $waktu = null): string
+{
+    $ts = $waktu ? strtotime($waktu) : time();
+    if ($ts === false) {
+        $ts = time();
+    }
+
+    $hari = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+    $bulan = [
+        1 => 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+    ];
+
+    return $hari[(int) date('w', $ts)] . ', '
+        . (int) date('j', $ts) . ' '
+        . $bulan[(int) date('n', $ts)] . ' '
+        . date('Y', $ts);
+}
+
 function tanggal_valid(string $teks): bool
 {
     $d = DateTime::createFromFormat('Y-m-d', $teks);
@@ -105,7 +124,7 @@ function ambil_flash(): array
 }
 
 /**
- * Menampilkan notifikasi sebagai popup yang ditutup dengan tombol OK.
+ * Menampilkan notifikasi sebagai dialog popup yang ditutup dengan tombol OK.
  */
 function render_flash(): void
 {
@@ -125,30 +144,36 @@ function render_flash(): void
         'info'   => '<circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 8h.01"/>',
     ];
 
-    echo '<div class="toast-area" id="toastArea">';
-    foreach ($flash as $f) {
+    echo '<div class="notif-lapisan" id="notifLapisan">';
+    foreach ($flash as $i => $f) {
         $tipe = in_array($f['tipe'] ?? '', ['error', 'info', 'sukses'], true) ? $f['tipe'] : 'sukses';
-        echo '<div class="toast toast-' . $tipe . '" role="alertdialog" aria-live="assertive">';
-        echo '<div class="toast-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" '
+        $id = 'notif-' . $i;
+        echo '<div class="notif-kartu notif-' . $tipe . '" role="alertdialog" aria-modal="true" '
+            . 'aria-labelledby="' . $id . '-judul" aria-describedby="' . $id . '-pesan">';
+        echo '<div class="notif-ikon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" '
             . 'stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
             . $ikon[$tipe] . '</svg></div>';
-        echo '<div class="toast-isi">';
-        echo '<div class="toast-judul">' . $judul[$tipe] . '</div>';
-        echo '<div class="toast-text">' . e($f['pesan']) . '</div>';
-        echo '</div>';
-        echo '<button type="button" class="toast-ok" onclick="tutupToast(this)">OK</button>';
+        echo '<div class="notif-label">SPIDEYVERSE</div>';
+        echo '<div class="notif-judul" id="' . $id . '-judul">' . $judul[$tipe] . '</div>';
+        echo '<div class="notif-pesan" id="' . $id . '-pesan">' . e($f['pesan']) . '</div>';
+        echo '<button type="button" class="notif-ok" onclick="tutupNotif(this)">OK</button>';
+        echo '<div class="notif-petunjuk">Tekan <b>Esc</b> untuk menutup</div>';
         echo '</div>';
     }
     echo '</div>';
     echo '<script>'
-        . 'function tutupToast(el){'
-        . 'var t=el.closest(".toast");if(!t)return;'
-        . 't.classList.add("toast-hide");'
-        . 'setTimeout(function(){var a=t.parentNode;t.remove();if(a&&!a.querySelector(".toast")){a.remove();}},240);'
+        . 'function tutupNotif(el){'
+        . 'var k=el.closest(".notif-kartu");if(!k||k.classList.contains("notif-keluar"))return;'
+        . 'k.classList.add("notif-keluar");'
+        . 'setTimeout(function(){var l=k.parentNode;k.remove();'
+        . 'if(l&&!l.querySelector(".notif-kartu")){l.remove();document.body.classList.remove("notif-aktif");}},260);'
         . '}'
         . 'document.addEventListener("keydown",function(e){'
-        . 'if(e.key==="Escape"){var t=document.querySelector(".toast");if(t){tutupToast(t.querySelector(".toast-ok")||t);}}'
+        . 'if(e.key==="Escape"){var b=document.querySelector(".notif-kartu .notif-ok");if(b){tutupNotif(b);}}'
         . '});'
+        . 'document.body.classList.add("notif-aktif");'
+        . 'var ok=document.querySelector(".notif-kartu .notif-ok");'
+        . 'if(ok){setTimeout(function(){ok.focus();},140);}'
         . '</script>';
 }
 

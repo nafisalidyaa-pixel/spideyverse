@@ -68,11 +68,11 @@ require __DIR__ . '/inc/header.php';
 
     <div class="panel">
         <div class="ringkas">
-            <a class="btn" href="barang_tambah.php">+ Barang</a>
-            <a class="btn" href="pengadaan_tambah.php">+ Pengadaan</a>
-            <a class="btn" href="penerimaan_tambah.php">+ Penerimaan</a>
-            <a class="btn" href="retur_tambah.php">+ Retur</a>
-            <a class="btn" href="penjualan_tambah.php">+ Penjualan</a>
+            <a class="btn btn-glow" href="barang_tambah.php">+ Barang</a>
+            <a class="btn btn-glow" href="pengadaan_tambah.php">+ Pengadaan</a>
+            <a class="btn btn-glow" href="penerimaan_tambah.php">+ Penerimaan</a>
+            <a class="btn btn-glow" href="retur_tambah.php">+ Retur</a>
+            <a class="btn btn-glow" href="penjualan_tambah.php">+ Penjualan</a>
             <a class="btn btn-outline" href="user_tambah.php">+ User</a>
         </div>
     </div>
@@ -116,9 +116,9 @@ require __DIR__ . '/inc/header.php';
 
     <div class="panel">
         <div class="ringkas">
-            <a class="btn" href="pengadaan_tambah.php">+ Pengadaan</a>
-            <a class="btn" href="penerimaan_tambah.php">+ Penerimaan</a>
-            <a class="btn" href="retur_tambah.php">+ Retur</a>
+            <a class="btn btn-glow" href="pengadaan_tambah.php">+ Pengadaan</a>
+            <a class="btn btn-glow" href="penerimaan_tambah.php">+ Penerimaan</a>
+            <a class="btn btn-glow" href="retur_tambah.php">+ Retur</a>
             <a class="btn btn-outline" href="kartu_stok.php">Lihat Kartu Stok</a>
         </div>
     </div>
@@ -127,7 +127,7 @@ require __DIR__ . '/inc/header.php';
     $menunggu = db_all(
         "SELECT p.idpengadaan, v.nama_vendor, p.timestamp, p.total_nilai,
                 (SELECT COALESCE(SUM(dp.jumlah), 0) FROM detail_pengadaan dp
-                 WHERE dp.idpengadaan = p.idpengadaan) AS total_qty,
+                 WHERE dp.idpengadaan = p.idpengadaan) AS total_kuantitas,
                 (SELECT COALESCE(SUM(dpe.jumlah_terima), 0)
                  FROM detail_penerimaan dpe
                  JOIN penerimaan pr ON pr.idpenerimaan = dpe.idpenerimaan
@@ -137,7 +137,7 @@ require __DIR__ . '/inc/header.php';
          WHERE p.status = 'A'
          ORDER BY p.idpengadaan DESC"
     );
-    $menunggu = array_values(array_filter($menunggu, fn($p) => (int) $p['diterima'] < (int) $p['total_qty']));
+    $menunggu = array_values(array_filter($menunggu, fn($p) => (int) $p['diterima'] < (int) $p['total_kuantitas']));
     ?>
     <div class="panel">
         <h2>Pengadaan Siap Diterima</h2>
@@ -155,9 +155,9 @@ require __DIR__ . '/inc/header.php';
                             <td><?= (int) $p['idpengadaan'] ?></td>
                             <td><?= e($p['nama_vendor']) ?></td>
                             <td><?= e(tanggal($p['timestamp'])) ?></td>
-                            <td class="angka"><?= (int) $p['total_qty'] ?></td>
+                            <td class="angka"><?= (int) $p['total_kuantitas'] ?></td>
                             <td class="angka"><?= (int) $p['diterima'] ?></td>
-                            <td class="angka"><?= (int) $p['total_qty'] - (int) $p['diterima'] ?></td>
+                            <td class="angka"><?= (int) $p['total_kuantitas'] - (int) $p['diterima'] ?></td>
                             <td><a class="btn btn-kecil btn-outline" href="penerimaan_tambah.php?pengadaan=<?= (int) $p['idpengadaan'] ?>">Terima</a></td>
                         </tr>
                     <?php endforeach; ?>
@@ -201,7 +201,7 @@ require __DIR__ . '/inc/header.php';
 
     <div class="panel">
         <div class="ringkas">
-            <a class="btn" href="penjualan_tambah.php">+ Transaksi Penjualan</a>
+            <a class="btn btn-glow" href="penjualan_tambah.php">+ Transaksi Penjualan</a>
             <a class="btn btn-outline" href="barang.php">Cek Stok Barang</a>
             <a class="btn btn-outline" href="penjualan.php">Riwayat Penjualan</a>
         </div>
@@ -251,17 +251,18 @@ require __DIR__ . '/inc/header.php';
     <div class="tabel-wrap">
         <table>
             <thead>
-                <tr><th>ID</th><th>Jenis</th><th>Barang</th><th class="angka">Harga</th><th class="angka">Stok</th><th>Status</th></tr>
+                <tr><th>ID</th><th>Jenis</th><th>Barang</th><th>Satuan</th><th class="angka">Harga</th><th class="angka">Stok</th><th>Status</th></tr>
             </thead>
             <tbody>
                 <?php if (!$stokKritis): ?>
-                    <tr><td class="kosong" colspan="6">Semua stok aman.</td></tr>
+                    <tr><td class="kosong" colspan="7">Semua stok aman.</td></tr>
                 <?php endif; ?>
                 <?php foreach ($stokKritis as $b): ?>
                     <tr>
                         <td><?= (int) $b['idbarang'] ?></td>
                         <td><?= e($b['jenis']) ?></td>
                         <td><?= e($b['nama']) ?></td>
+                        <td><?= e($b['nama_satuan']) ?></td>
                         <td class="angka"><?= rupiah($b['harga']) ?></td>
                         <td class="angka"><b><?= (int) $b['stok'] ?></b></td>
                         <td><?= badge_stok($b['stok']) ?></td>

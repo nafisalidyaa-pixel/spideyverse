@@ -18,12 +18,9 @@ if (in_array($jenis, ['M', 'K', 'R'], true)) {
 }
 
 $sql =
-    "SELECT * FROM (
+    "SELECT t.* FROM (
         SELECT ks.idkartu_stok, ks.created_at, ks.jenis_transaksi, ks.masuk, ks.keluar,
-               ks.stock, ks.idtransaksi, ks.idbarang, b.nama, b.jenis,
-               SUM(ks.masuk - ks.keluar) OVER (
-                   PARTITION BY ks.idbarang ORDER BY ks.idkartu_stok
-               ) AS stok_jalan
+               ks.stock, ks.idtransaksi, ks.idbarang, b.nama
         FROM kartu_stok ks
         JOIN barang b ON b.idbarang = ks.idbarang
      ) t";
@@ -45,7 +42,7 @@ require __DIR__ . '/inc/header.php';
     <div class="sub">
         Catatan keluar-masuk stok barang. Kode M berarti barang masuk dari penerimaan,
         K barang keluar karena penjualan, dan R barang keluar karena retur.
-        Kolom stok berjalan menunjukkan sisa stok setelah setiap transaksi.
+        Kolom stok tercatat menunjukkan sisa stok yang tersimpan pada setiap pencatatan.
     </div>
 </div>
 
@@ -86,14 +83,15 @@ require __DIR__ . '/inc/header.php';
             <thead>
                 <tr>
                     <th>ID</th><th>Waktu</th><th>Barang</th><th>Jenis</th>
-                    <th class="angka">Masuk</th><th class="angka">Keluar</th>
-                    <th class="angka">Stok Berjalan</th><th class="angka">Stok Tercatat</th>
+                    <th class="angka">Masuk</th>
+                    <th class="angka">Keluar</th>
+                    <th class="angka">Stok Tercatat</th>
                     <th class="angka">ID Transaksi</th>
                 </tr>
             </thead>
             <tbody>
                 <?php if (!$mutasi): ?>
-                    <tr><td class="kosong" colspan="9">Belum ada mutasi stok.</td></tr>
+                    <tr><td class="kosong" colspan="8">Belum ada mutasi stok.</td></tr>
                 <?php endif; ?>
                 <?php foreach ($mutasi as $m): ?>
                     <tr>
@@ -103,8 +101,7 @@ require __DIR__ . '/inc/header.php';
                         <td><?= badge_jenis_transaksi($m['jenis_transaksi']) ?></td>
                         <td class="angka"><?= (int) $m['masuk'] ?></td>
                         <td class="angka"><?= (int) $m['keluar'] ?></td>
-                        <td class="angka"><b><?= (int) $m['stok_jalan'] ?></b></td>
-                        <td class="angka"><?= (int) $m['stock'] ?></td>
+                        <td class="angka"><b><?= (int) $m['stock'] ?></b></td>
                         <td class="angka"><?= (int) $m['idtransaksi'] ?></td>
                     </tr>
                 <?php endforeach; ?>

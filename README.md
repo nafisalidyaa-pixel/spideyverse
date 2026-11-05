@@ -112,6 +112,7 @@ Lalu buka **http://127.0.0.1:8123**.
 ## Objek Database yang Dipakai
 
 - **15 tabel**: `barang`, `satuan`, `vendor`, `role`, `user`, `margin_penjualan`, `pengadaan`, `detail_pengadaan`, `penerimaan`, `detail_penerimaan`, `retur`, `detail_retur`, `penjualan`, `detail_penjualan`, `kartu_stok`
+- **6 view master**: `v_barang`, `v_satuan`, `v_vendor`, `v_role`, `v_user`, `v_margin_penjualan`
 - **4 trigger**:
   - `trg_penerimaan_stok` - menambah stok saat penerimaan
   - `trg_retur_stok` - mengurangi stok saat retur
@@ -119,6 +120,19 @@ Lalu buka **http://127.0.0.1:8123**.
   - `trg_penjualan_validasi_stok` - menolak penjualan jika stok kurang
 - **1 function**: `fn_hitung_subtotal(harga, jumlah)`
 - **1 stored procedure**: `sp_tambah_penjualan(iduser, idmargin, idbarang, jumlah)`
+
+## View Master
+
+| View | Fungsi |
+|---|---|
+| `v_barang` | Daftar barang lengkap dengan satuan, kategori, status, dan stok |
+| `v_satuan` | Daftar satuan beserta jumlah barang yang menggunakannya |
+| `v_vendor` | Daftar vendor beserta jumlah pengadaan |
+| `v_role` | Daftar role beserta jumlah user |
+| `v_user` | Daftar user dan role tanpa menampilkan password |
+| `v_margin_penjualan` | Daftar margin penjualan, status, dan user pembuat |
+
+File query tersedia di `database/views_master.sql`. Jalankan file tersebut di HeidiSQL apabila view belum dibuat.
 
 ---
 
@@ -128,6 +142,7 @@ Lalu buka **http://127.0.0.1:8123**.
 spideyverse/
 ├── assets/css/style.css        # Tema pink, popup notifikasi, kartu bukti transaksi
 ├── database/spideyverse.sql    # Ekspor struktur + data + objek database
+├── database/views_master.sql   # Pembuatan 6 view tabel master untuk HeidiSQL
 ├── inc/
 │   ├── koneksi.php             # Koneksi PDO
 │   ├── helpers.php             # Escaping, format, query mentah
@@ -147,9 +162,10 @@ spideyverse/
 ## Catatan Tampilan
 
 - Setiap proses berhasil menampilkan **popup notifikasi** dengan tombol **OK**; popup tidak menutup sendiri.
+- Tombol menampilkan bayangan tebal khas tombol fisik; saat ditekan, tombol tenggelam mendekati panel.
+- Efek kilau muncul pada tombol utama dan tombol OK di popup.
 - Tombol submit menampilkan status **Memproses...** saat form dikirim.
 - Bukti transaksi ditampilkan sebagai kartu invoice dengan badge **Lunas**.
-- Tidak ada fitur cetak pada aplikasi ini.
 
 ---
 

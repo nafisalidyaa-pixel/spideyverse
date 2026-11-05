@@ -61,6 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
+<?php render_flash(); ?>
 <div class="login-wrap">
     <div class="login-kotak">
         <div class="brand">
@@ -70,9 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
         </div>
 
-        <h1>Masuk</h1>
-
-        <?php render_flash(); ?>
+        <h1 class="judul-timbul">Masuk</h1>
 
         <?php if ($error !== ''): ?>
             <div class="alert alert-error"><?= e($error) ?></div>
@@ -83,16 +82,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div>
                     <label for="username">Username</label>
                     <input type="text" id="username" name="username" autocomplete="username"
-                           value="<?= e($_POST['username'] ?? '') ?>" required>
+                           value="<?= e($_POST['username'] ?? '') ?>" required autofocus>
                 </div>
                 <div>
                     <label for="password">Password</label>
                     <input type="password" id="password" name="password" autocomplete="current-password" required>
-                    <small>Password membedakan huruf besar dan kecil.</small>
                 </div>
             </div>
             <div class="form-aksi">
-                <button type="submit" class="btn" style="width:100%">Masuk</button>
+                <button type="submit" class="btn btn-glow" style="width:100%">Masuk</button>
             </div>
         </form>
     </div>

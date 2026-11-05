@@ -103,15 +103,26 @@ if ($role === 1) {
     </aside>
 
     <main class="konten">
-        <div class="topbar">
-            <h1 style="margin:0"><?= e($JUDUL) ?></h1>
+        <header class="topbar">
+            <div class="topbar-utama">
+                <div class="topbar-meta">
+                    <span class="topbar-tanda" aria-hidden="true"></span>
+                    <span>Ruang Kerja</span>
+                    <span class="topbar-pisah">/</span>
+                    <span><?= e($u['nama_role'] ?? '') ?></span>
+                    <span class="topbar-pisah">/</span>
+                    <span><?= e(tanggal_indonesia()) ?></span>
+                </div>
+                <h1 class="judul-timbul"><?= e($JUDUL) ?></h1>
+            </div>
             <div class="topbar-user">
+                <div class="avatar" aria-hidden="true"><?= e(strtoupper(substr((string) ($u['username'] ?? 'U'), 0, 1))) ?></div>
                 <div class="user-info">
                     <span class="user-nama"><?= e($u['username'] ?? '') ?></span>
-                    <span class="badge badge-role">Role aktif: <?= e($u['nama_role'] ?? '') ?></span>
+                    <span class="badge badge-role"><span class="badge-titik"></span> Role aktif: <?= e($u['nama_role'] ?? '') ?></span>
                 </div>
                 <a href="logout.php" class="btn btn-kecil btn-outline">Keluar</a>
             </div>
-        </div>
+        </header>
 
         <?php render_flash(); ?>
