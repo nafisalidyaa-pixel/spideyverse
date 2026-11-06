@@ -36,6 +36,7 @@ if ($where) {
 }
 $sql .= $cfg['order_sql'];
 
+// Mengeksekusi list_sql master — sebagian besar halaman master memanggil view (v_barang, v_satuan, v_vendor, v_role, v_user, v_margin_penjualan)
 $data = db_all($sql, $params);
 
 $JUDUL = $cfg['judul'];

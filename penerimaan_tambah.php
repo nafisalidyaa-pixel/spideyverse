@@ -82,11 +82,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $idPenerimaan = db_insert_id();
 
             foreach ($items as $item) {
+                // Memanggil function: fn_hitung_subtotal (definisi di database/03_function.sql)
                 $subtotal = (int) db_val(
                     "SELECT fn_hitung_subtotal(?, ?)",
                     [$item['harga'], $item['jumlah']]
                 );
 
+                // Memicu trigger: trg_penerimaan_stok (definisi di database/02_trigger.sql)
+                // Trigger menambah stok ke kartu_stok jenis M
                 db_exec(
                     "INSERT INTO detail_penerimaan
                         (idpenerimaan, barang_idbarang, jumlah_terima, harga_satuan_terima, sub_total_terima)

@@ -89,6 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $subtotal = 0;
                 $hitung = [];
                 foreach ($rows as $item) {
+                    // Memanggil function: fn_hitung_subtotal (definisi di database/03_function.sql)
                     $sub = (int) db_val(
                         "SELECT fn_hitung_subtotal(?, ?)",
                         [$item['harga'], $item['jumlah']]

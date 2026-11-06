@@ -1,8 +1,5 @@
 <?php
-/**
- * Konfigurasi CRUD master data (SQL mentah).
- * Semua nama tabel/kolom berasal dari konfigurasi internal, bukan input user.
- */
+
 
 function master_config(string $key): array
 {
@@ -18,6 +15,7 @@ function master_config(string $key): array
             'edit_roles' => [1],
             'cari'     => ['b.nama', 'b.idbarang'],
             'filter_jenis' => true,
+            // Membaca dari view: v_barang (definisi di database/05_view.sql)
             'list_sql' => "SELECT b.idbarang, b.jenis, b.nama, b.nama_satuan, b.status, b.harga, b.stok
                            FROM v_barang b",
             'order_sql' => " ORDER BY b.jenis, b.idbarang",
@@ -52,6 +50,7 @@ function master_config(string $key): array
             'pk'       => 'idsatuan',
             'roles'    => [1, 2],
             'edit_roles' => [1],
+            // Membaca dari view: v_satuan (definisi di database/05_view.sql)
             'list_sql' => "SELECT s.idsatuan, s.nama_satuan, s.status, s.jumlah_barang AS dipakai
                            FROM v_satuan s",
             'order_sql' => " ORDER BY s.idsatuan",
@@ -76,6 +75,7 @@ function master_config(string $key): array
             'pk'       => 'idvendor',
             'roles'    => [1, 2],
             'edit_roles' => [1],
+            // Membaca dari view: v_vendor (definisi di database/05_view.sql)
             'list_sql' => "SELECT v.idvendor, v.nama_vendor, v.badan_hukum, v.status, v.jumlah_pengadaan AS dipakai
                            FROM v_vendor v",
             'order_sql' => " ORDER BY v.idvendor",
@@ -105,6 +105,7 @@ function master_config(string $key): array
             'pk'       => 'idrole',
             'roles'    => [1],
             'edit_roles' => [1],
+            // Membaca dari view: v_role (definisi di database/05_view.sql)
             'list_sql' => "SELECT r.idrole, r.nama_role, r.jumlah_user
                            FROM v_role r",
             'order_sql' => " ORDER BY r.idrole",
@@ -127,6 +128,7 @@ function master_config(string $key): array
             'roles'    => [1],
             'edit_roles' => [1],
             'cari'     => ['u.username'],
+            // Membaca dari view: v_user (definisi di database/05_view.sql)
             'list_sql' => "SELECT u.iduser, u.username, u.idrole, u.nama_role, u.jumlah_penjualan
                            FROM v_user u",
             'order_sql' => " ORDER BY u.iduser",
@@ -162,6 +164,7 @@ function master_config(string $key): array
             'pk'       => 'idmargin_penjualan',
             'roles'    => [1],
             'edit_roles' => [1],
+            // Membaca dari view: v_margin_penjualan (definisi di database/05_view.sql)
             'list_sql' => "SELECT m.idmargin_penjualan, m.persen, m.status, m.username,
                                   m.jumlah_penjualan AS dipakai, m.created_at, m.updated_at
                            FROM v_margin_penjualan m",

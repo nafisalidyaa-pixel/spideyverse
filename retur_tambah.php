@@ -54,6 +54,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             );
             $idRetur = db_insert_id();
 
+            // Memicu trigger: trg_retur_stok (definisi di database/02_trigger.sql)
+            // Trigger memvalidasi sisa penerimaan & stok, lalu mengurangi stok (kartu_stok jenis R)
             db_exec(
                 "INSERT INTO detail_retur (jumlah, alasan, idretur, iddetail_penerimaan)
                  VALUES (?, ?, ?, ?)",

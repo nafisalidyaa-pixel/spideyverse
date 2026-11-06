@@ -5,6 +5,7 @@ cek_role([1, 3]);
 $errors = [];
 $errorTrigger = '';
 
+// Membaca dari view: v_barang (definisi di database/05_view.sql)
 $barang = db_all(
     "SELECT v.idbarang, v.nama, v.jenis, v.harga, v.stok
      FROM v_barang v
@@ -12,6 +13,7 @@ $barang = db_all(
      ORDER BY v.nama"
 );
 
+// Membaca dari view: v_margin_penjualan (definisi di database/05_view.sql)
 $marginAuto = db_one(
     "SELECT m.idmargin_penjualan, m.persen
      FROM v_margin_penjualan m
@@ -57,6 +59,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (!$errors) {
         try {
+            // Memanggil stored procedure: sp_tambah_penjualan_keranjang (definisi di database/04_sp.sql)
+            // SP memicu trigger trg_penjualan_validasi_stok & trg_penjualan_stok (database/02_trigger.sql)
             catat_query(
                 'CALL sp_tambah_penjualan_keranjang(?, ?, ?)',
                 [id_user(), $idmarginAuto, json_encode($items)]

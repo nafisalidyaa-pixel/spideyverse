@@ -209,6 +209,7 @@ function db_all(string $sql, array $params = []): array
 {
     global $pdo;
     catat_query($sql, $params);
+    // Query di sini boleh berisi view (v_barang, v_satuan, dst.) / pemanggilan SP
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
     return $stmt->fetchAll();
@@ -218,6 +219,7 @@ function db_one(string $sql, array $params = []): ?array
 {
     global $pdo;
     catat_query($sql, $params);
+    // Query di sini boleh berisi view / pemanggilan SP
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
     $row = $stmt->fetch();
