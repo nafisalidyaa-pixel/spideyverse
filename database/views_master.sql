@@ -1,8 +1,3 @@
--- =========================================================
--- SPIDEYVERSE - 6 View Tabel Master
--- Jalankan seluruh isi berkas ini di HeidiSQL (F9 / Execute).
--- Aman dijalankan berulang kali karena memakai CREATE OR REPLACE.
--- =========================================================
 
 USE `spideyverse`;
 
@@ -104,9 +99,6 @@ SELECT
 FROM `margin_penjualan` m
 LEFT JOIN `user` u ON u.`iduser` = m.`iduser`;
 
--- =========================================================
--- Pemeriksaan: daftar view yang sudah dibuat
--- =========================================================
 SELECT TABLE_NAME AS `view`
 FROM information_schema.VIEWS
 WHERE TABLE_SCHEMA = 'spideyverse'

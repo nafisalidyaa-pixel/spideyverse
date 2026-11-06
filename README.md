@@ -17,16 +17,24 @@ Tema tampilan: **enterprise pink premium** — sidebar wine gelap, area kerja bl
 ## Cara Menjalankan
 
 ### 1. Impor database
-Berkas ekspor database tersedia di `database/spideyverse.sql`. Berkas ini sudah memuat struktur tabel, data awal, trigger, function, dan stored procedure.
+Database dipecah menjadi beberapa berkas berdasarkan objeknya. Jalankan **secara berurutan**:
 
-**Lewat HeidiSQL / phpMyAdmin**
+| Urutan | Berkas | Isi |
+|---|---|---|
+| 1 | `database/01_tabel.sql` | Struktur 15 tabel + data awal |
+| 2 | `database/02_trigger.sql` | 4 trigger |
+| 3 | `database/03_function.sql` | Function `fn_hitung_subtotal` |
+| 4 | `database/04_sp.sql` | Stored procedure (penjualan keranjang) |
+| 5 | `database/05_view.sql` | 6 view master |
+
+**Lewat HeidiSQL**
 1. Buat koneksi ke MySQL lokal.
-2. Pilih menu **Import** (HeidiSQL) atau tab **Import** (phpMyAdmin).
-3. Pilih `database/spideyverse.sql`, lalu jalankan.
+2. Pilih menu **Import**, pilih semua berkas di bawah ini, lalu jalankan dalam satu sesi.
+3. Urutan: `01_tabel.sql` → `02_trigger.sql` → `03_function.sql` → `04_sp.sql` → `05_view.sql`.
 
-**Lewat terminal**
+**Lewat terminal (gabung semua berkas lalu impor sekali)**
 ```powershell
-mysql -uroot -e "SOURCE C:/laragon/www/spideyverse/database/spideyverse.sql"
+Get-Content database\01_tabel.sql,database\02_trigger.sql,database\03_function.sql,database\04_sp.sql,database\05_view.sql -Raw | mysql -uroot --default-character-set=utf8mb4 -D spideyverse
 ```
 
 ### 2. Sesuaikan koneksi
@@ -132,17 +140,9 @@ Lalu buka **http://127.0.0.1:8123**.
 
 ## View Master
 
-| View | Fungsi |
-|---|---|
-| `v_barang` | Daftar barang lengkap dengan satuan, kategori, status, dan stok |
-| `v_satuan` | Daftar satuan beserta jumlah barang yang menggunakannya |
-| `v_vendor` | Daftar vendor beserta jumlah pengadaan |
-| `v_role` | Daftar role beserta jumlah user |
-| `v_user` | Daftar user dan role tanpa menampilkan password |
-| `v_margin_penjualan` | Daftar margin penjualan, status, user pembuat, dan jumlah pemakaian |
-
-File query view tersedia di `database/views_master.sql`. Jalankan file tersebut di HeidiSQL apabila view belum dibuat.
-Stored procedure keranjang penjualan tersedia di `database/sp_tambah_penjualan_keranjang.sql`.
+File view master utama berada di `database/05_view.sql` (bagian dump ekspor yang berisi definisi ke-6 view).
+File `database/views_master.sql` tetap tersedia sebagai alternatif pembuatan view **Create-or-Replace** yang aman dijalankan berulang di HeidiSQL.
+File `database/sp_tambah_penjualan_keranjang.sql` tersedia sebagai alternatif pembuatan ulang SP keranjang.
 
 ---
 
@@ -151,9 +151,13 @@ Stored procedure keranjang penjualan tersedia di `database/sp_tambah_penjualan_k
 ```
 spideyverse/
 ├── assets/css/style.css        # Tema pink, popup notifikasi, kartu bukti transaksi
-├── database/spideyverse.sql    # Ekspor struktur + data + objek database
-├── database/views_master.sql   # Pembuatan 6 view tabel master untuk HeidiSQL
-├── database/sp_tambah_penjualan_keranjang.sql # SP keranjang penjualan untuk HeidiSQL
+├── database/01_tabel.sql       # Struktur 15 tabel + data awal
+├── database/02_trigger.sql     # 4 trigger
+├── database/03_function.sql    # Function fn_hitung_subtotal
+├── database/04_sp.sql          # Stored procedure keranjang penjualan
+├── database/05_view.sql        # 6 view master + reset waktu sesi
+├── database/views_master.sql   # Alternatif pembuatan ulang 6 view
+├── database/sp_tambah_penjualan_keranjang.sql # Alternatif pembuatan ulang SP
 ├── inc/
 │   ├── koneksi.php             # Koneksi PDO
 │   ├── helpers.php             # Escaping, format, query mentah
