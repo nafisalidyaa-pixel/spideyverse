@@ -140,9 +140,7 @@ Lalu buka **http://127.0.0.1:8123**.
 
 ## View Master
 
-File view master utama berada di `database/05_view.sql` (bagian dump ekspor yang berisi definisi ke-6 view).
-File `database/views_master.sql` tetap tersedia sebagai alternatif pembuatan view **Create-or-Replace** yang aman dijalankan berulang di HeidiSQL.
-File `database/sp_tambah_penjualan_keranjang.sql` tersedia sebagai alternatif pembuatan ulang SP keranjang.
+Definisi 6 view master berada di `database/05_view.sql`.
 
 ---
 
@@ -155,9 +153,7 @@ spideyverse/
 ├── database/02_trigger.sql     # 4 trigger
 ├── database/03_function.sql    # Function fn_hitung_subtotal
 ├── database/04_sp.sql          # Stored procedure keranjang penjualan
-├── database/05_view.sql        # 6 view master + reset waktu sesi
-├── database/views_master.sql   # Alternatif pembuatan ulang 6 view
-├── database/sp_tambah_penjualan_keranjang.sql # Alternatif pembuatan ulang SP
+├── database/05_view.sql        # 6 view master
 ├── inc/
 │   ├── koneksi.php             # Koneksi PDO
 │   ├── helpers.php             # Escaping, format, query mentah

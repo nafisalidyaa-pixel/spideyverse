@@ -1,19 +1,7 @@
-﻿-- =========================================================
--- SPIDEYVERSE - Stored Procedure
--- Jalankan setelah 01_tabel.sql, 02_trigger.sql, 03_function.sql.
--- =========================================================
+﻿DROP PROCEDURE IF EXISTS `sp_tambah_penjualan`;
 
-/*!50003 DROP PROCEDURE IF EXISTS `sp_tambah_penjualan` */;
-/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
-/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
-/*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8mb4 */ ;
-/*!50003 SET character_set_results = utf8mb4 */ ;
-/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
-/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_tambah_penjualan`(
+CREATE PROCEDURE `sp_tambah_penjualan`(
     IN p_iduser INT,
     IN p_idmargin INT,
     IN p_idbarang INT,
@@ -145,21 +133,11 @@ BEGIN
         v_total AS total_pembayaran;
 END ;;
 DELIMITER ;
-/*!50003 SET sql_mode              = @saved_sql_mode */ ;
-/*!50003 SET character_set_client  = @saved_cs_client */ ;
-/*!50003 SET character_set_results = @saved_cs_results */ ;
-/*!50003 SET collation_connection  = @saved_col_connection */ ;
-/*!50003 DROP PROCEDURE IF EXISTS `sp_tambah_penjualan_keranjang` */;
-/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
-/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
-/*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8mb4 */ ;
-/*!50003 SET character_set_results = utf8mb4 */ ;
-/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
-/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+
+DROP PROCEDURE IF EXISTS `sp_tambah_penjualan_keranjang`;
+
 DELIMITER ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_tambah_penjualan_keranjang`(
+CREATE PROCEDURE `sp_tambah_penjualan_keranjang`(
     IN p_iduser INT,
     IN p_idmargin INT,
     IN p_items JSON
@@ -179,7 +157,7 @@ BEGIN
 
     START TRANSACTION;
 
-    
+    -- Margin harus ada dan berstatus aktif.
     SELECT persen INTO v_persen
     FROM margin_penjualan
     WHERE idmargin_penjualan = p_idmargin
@@ -191,13 +169,13 @@ BEGIN
             SET MESSAGE_TEXT = 'Margin tidak ditemukan atau tidak aktif';
     END IF;
 
-    
+    -- Keranjang wajib berisi minimal satu item.
     IF p_items IS NULL OR JSON_LENGTH(p_items) = 0 THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'Minimal satu barang harus diisi';
     END IF;
 
-    
+    -- Barang pada setiap baris harus aktif dan tersedia.
     IF EXISTS (
         SELECT 1
         FROM JSON_TABLE(
@@ -215,7 +193,7 @@ BEGIN
             SET MESSAGE_TEXT = 'Barang tidak ditemukan atau tidak aktif';
     END IF;
 
-    
+    -- Jumlah pada setiap baris harus lebih dari nol.
     IF EXISTS (
         SELECT 1
         FROM JSON_TABLE(
@@ -232,7 +210,7 @@ BEGIN
             SET MESSAGE_TEXT = 'Jumlah harus lebih dari nol';
     END IF;
 
-    
+    -- Stok gabungan per barang harus mencukupi.
     IF EXISTS (
         SELECT 1
         FROM (
@@ -257,7 +235,7 @@ BEGIN
             SET MESSAGE_TEXT = 'Stok barang tidak mencukupi';
     END IF;
 
-    
+    -- Subtotal dihitung memakai function.
     SELECT SUM(fn_hitung_subtotal(ROUND(b.harga + b.harga * v_persen / 100), jt.jumlah))
     INTO v_subtotal
     FROM JSON_TABLE(
@@ -280,8 +258,8 @@ BEGIN
 
     SET v_idpenjualan = LAST_INSERT_ID();
 
-    
-    
+    -- Detail item. Trigger pada detail_penjualan otomatis
+    -- memvalidasi stok dan mengurangi stok per barang.
     INSERT INTO detail_penjualan
         (harga_satuan, jumlah, subtotal, penjualan_idpenjualan, idbarang)
     SELECT ROUND(b.harga + b.harga * v_persen / 100),
@@ -308,7 +286,3 @@ BEGIN
         v_total       AS total_pembayaran;
 END ;;
 DELIMITER ;
-/*!50003 SET sql_mode              = @saved_sql_mode */ ;
-/*!50003 SET character_set_client  = @saved_cs_client */ ;
-/*!50003 SET character_set_results = @saved_cs_results */ ;
-/*!50003 SET collation_connection  = @saved_col_connection */ ;
