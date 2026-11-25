@@ -17,32 +17,30 @@ if ($id <= 0) {
 
 try {
     // Konfirmasi pengadaan: data detail barang yang ditampung di session
-    // (dalam bentuk JSON) baru dimasukkan ke tabel detail_pengadaan
-    // setelah tombol konfirmasi dipencet.
+    // (dalam bentuk JSON) dimasukkan ke tabel detail_pengadaan melalui
+    // stored procedure sp_simpan_pengadaan, lalu status pengadaan diubah.
     $dataPending = json_decode($_SESSION['pending_pengadaan'][$id] ?? '', true);
     if (is_array($dataPending)) {
         foreach ($dataPending as $item) {
-            db_exec(
-                "INSERT INTO detail_pengadaan
-                    (harga_satuan, jumlah, sub_total, idbarang, idpengadaan)
-                 VALUES (?, ?, ?, ?, ?)",
-                [
-                    (int) $item['harga'],
-                    (int) $item['jumlah'],
-                    (int) db_val(
-                        "SELECT fn_hitung_subtotal(?, ?)",
-                        [(int) $item['harga'], (int) $item['jumlah']]
-                    ),
-                    (int) $item['idbarang'],
-                    $id,
-                ]
-            );
+            // Memanggil stored procedure: sp_simpan_pengadaan (definisi di database/04_sp.sql)
+            // SP menyimpan detail barang lalu menghitung ulang subtotal, PPN, dan total
+            // melalui function fn_calculate_ppn (definisi di database/03_function.sql).
+            $stmt = $pdo->prepare('CALL sp_simpan_pengadaan(?, ?, ?, ?, ?, ?)');
+            $stmt->execute([
+                id_user(),
+                (int) $item['idvendor'],
+                (int) $item['idbarang'],
+                (int) $item['jumlah'],
+                (int) $item['harga'],
+                $id,
+            ]);
+            $stmt->closeCursor();
         }
         unset($_SESSION['pending_pengadaan'][$id]);
     }
 
     $jumlah = db_exec(
-        "UPDATE pengadaan SET status = 'A' WHERE idpengadaan = ? AND status = 'D'",
+        "UPDATE pengadaan SET status = 'A' WHERE idpengadaan = ? AND status = 'P'",
         [$id]
     );
 

@@ -18,7 +18,7 @@ if ($id <= 0) {
 try {
     $status = db_val("SELECT status FROM pengadaan WHERE idpengadaan = ?", [$id]);
 
-    if ($status !== 'D') {
+    if ($status !== 'P') {
         flash('error', 'Hanya pengadaan yang masih menunggu persetujuan yang bisa dihapus.');
         redirect_dengan_log('pengadaan_detail.php?id=' . $id);
     }

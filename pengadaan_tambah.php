@@ -99,13 +99,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $subtotal += $sub;
                 }
 
-                $ppn = (int) round($subtotal * 0.11);
+                // Memanggil function: fn_calculate_ppn (definisi di database/03_function.sql)
+                // PPN dihitung dari subtotal = subtotal x 0.11
+                $ppn = (int) db_val("SELECT fn_calculate_ppn(?)", [$subtotal]);
                 $total = $subtotal + $ppn;
 
                 db_exec(
                     "INSERT INTO pengadaan
                         (user_iduser, status, vendor_idvendor, subtotal_nilai, ppn, total_nilai)
-                     VALUES (?, 'D', ?, ?, ?, ?)",
+                     VALUES (?, 'P', ?, ?, ?, ?)",
                     [id_user(), $idvendor, $subtotal, $ppn, $total]
                 );
                 $idPengadaan = db_insert_id();

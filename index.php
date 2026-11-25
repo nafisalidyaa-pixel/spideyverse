@@ -87,14 +87,14 @@ require __DIR__ . '/inc/header.php';
 <?php elseif ($role === 2): ?>
     <!-- ================= STAFF GUDANG ================= -->
     <?php
-    $pengadaanDraft = (int) db_val("SELECT COUNT(*) FROM pengadaan WHERE status = 'D'");
+    $pengadaanMenunggu = (int) db_val("SELECT COUNT(*) FROM pengadaan WHERE status = 'P'");
     $terimaHariIni  = (int) db_val("SELECT COUNT(*) FROM penerimaan WHERE DATE(created_at) = CURDATE()");
     $returHariIni   = (int) db_val("SELECT COUNT(*) FROM retur WHERE DATE(created_at) = CURDATE()");
     ?>
     <div class="grid mb">
         <div class="kartu">
             <div class="ket">Pengadaan Menunggu</div>
-            <div class="angka"><?= $pengadaanDraft ?></div>
+            <div class="angka"><?= $pengadaanMenunggu ?></div>
             <small>menunggu persetujuan</small>
         </div>
         <div class="kartu">

@@ -57,7 +57,7 @@ require __DIR__ . '/inc/header.php';
                                 <a class="btn btn-kecil btn-outline"
                                    href="pengadaan_detail.php?id=<?= (int) $p['idpengadaan'] ?>">Detail</a>
 
-                                <?php if ($p['status'] === 'D'): ?>
+                                <?php if ($p['status'] === 'P'): ?>
                                     <form method="post" action="pengadaan_setujui.php">
                                         <input type="hidden" name="id" value="<?= (int) $p['idpengadaan'] ?>">
                                         <button type="submit" class="btn btn-kecil">Setujui</button>

@@ -51,7 +51,7 @@ require __DIR__ . '/inc/header.php';
         </div>
         <div class="aksi">
             <a class="btn btn-outline" href="pengadaan.php">Kembali</a>
-            <?php if ($header['status'] === 'D'): ?>
+            <?php if ($header['status'] === 'P'): ?>
                 <form method="post" action="pengadaan_setujui.php">
                     <input type="hidden" name="id" value="<?= (int) $id ?>">
                     <button type="submit" class="btn">Setujui Pengadaan</button>
