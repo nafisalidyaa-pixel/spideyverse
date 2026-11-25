@@ -85,6 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $daftarId = [];
             $daftarNama = [];
+            $daftarItems = [];
             foreach ($grup as $idvendor => $rows) {
                 $subtotal = 0;
                 $hitung = [];
@@ -119,24 +120,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 $daftarNama[] = '#' . $idPengadaan . ' (' . $namaVendor . ')';
 
-                foreach ($rows as $i => $item) {
-                    db_exec(
-                        "INSERT INTO detail_pengadaan
-                            (harga_satuan, jumlah, sub_total, idbarang, idpengadaan)
-                         VALUES (?, ?, ?, ?, ?)",
-                        [$item['harga'], $item['jumlah'], $hitung[$i], $item['idbarang'], $idPengadaan]
-                    );
-                }
+                // Data detail pengadaan ditampung di session; akan dimasukkan
+                // ke tabel detail_pengadaan pada saat tombol konfirmasi dipencet.
+                $daftarItems[(int) $idPengadaan] = $rows;
+            }
+
+            // Menyimpan data detail pengadaan yang belum dikonfirmasi (di session).
+            foreach ($daftarItems as $idP => $rowsBarang) {
+                $_SESSION['pending_pengadaan'][(int) $idP] = $rowsBarang;
             }
 
             $pdo->commit();
 
             $pesan = (count($daftarId) > 1)
-                ? 'Barang dari vendor berbeda dibuatkan pengadaan terpisah: ' . implode(', ', $daftarNama) . '. Menunggu persetujuan.'
-                : 'Pengadaan #' . $daftarId[0] . ' berhasil dibuat dan menunggu persetujuan.';
+                ? 'Barang dari vendor berbeda dibuatkan pengadaan terpisah: ' . implode(', ', $daftarNama) . '. Menunggu konfirmasi.'
+                : 'Pengadaan #' . $daftarId[0] . ' berhasil dibuat dan menunggu konfirmasi.';
 
             flash('sukses', $pesan);
-            redirect_dengan_log('pengadaan.php');
+            redirect_dengan_log('pengadaan_detail.php?id=' . (int) $daftarId[0]);
         } catch (PDOException $e) {
             if ($pdo->inTransaction()) {
                 $pdo->rollBack();
