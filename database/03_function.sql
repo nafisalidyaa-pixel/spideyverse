@@ -14,3 +14,17 @@ BEGIN
     RETURN p_harga * p_jumlah;
 END ;;
 DELIMITER ;
+
+DROP FUNCTION IF EXISTS `fn_calculate_ppn`;
+-- hitung PPN = subtotal x 0.11
+
+DELIMITER ;;
+CREATE FUNCTION `fn_calculate_ppn`(
+    p_subtotal DECIMAL(14,2)
+) RETURNS DECIMAL(14,2)
+    DETERMINISTIC
+BEGIN
+    RETURN ROUND(p_subtotal * 0.11);
+END ;;
+DELIMITER ;
+-- Mengembalikan tanda akhir query menjadi ;.

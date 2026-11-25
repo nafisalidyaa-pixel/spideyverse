@@ -291,3 +291,43 @@ END ;;
 
 DELIMITER ;
 -- Mengembalikan tanda akhir query.
+
+DROP PROCEDURE IF EXISTS `sp_simpan_pengadaan`;
+-- Menyimpan pengadaan barang: jika ID pengadaan masih 0, buat header baru.
+
+DELIMITER ;;
+CREATE PROCEDURE `sp_simpan_pengadaan`(
+    IN p_iduser INT,
+    IN p_idvendor INT,
+    IN p_idbarang INT,
+    IN p_jumlah INT,
+    IN p_harga INT,
+    INOUT p_idpengadaan INT
+)
+BEGIN
+    DECLARE v_subtotal INT;
+    SET v_subtotal = p_jumlah * p_harga;
+    -- Subtotal = harga satuan x jumlah barang.
+
+    IF p_idpengadaan = 0 THEN
+        INSERT INTO pengadaan (user_iduser, vendor_idvendor, status, subtotal_nilai, ppn, total_nilai)
+        VALUES (p_iduser, p_idvendor, 'P', 0, 0, 0);
+        SET p_idpengadaan = LAST_INSERT_ID();
+    END IF;
+    -- Jika ID pengadaan masih 0, buat header pengadaan baru dan ambil ID-nya.
+
+    INSERT INTO detail_pengadaan (idpengadaan, idbarang, harga_satuan, jumlah, sub_total)
+    VALUES (p_idpengadaan, p_idbarang, p_harga, p_jumlah, v_subtotal);
+    -- Simpan detail barang ke header pengadaan.
+
+    UPDATE pengadaan
+    SET subtotal_nilai = (SELECT COALESCE(SUM(sub_total), 0) FROM detail_pengadaan WHERE idpengadaan = p_idpengadaan),
+        ppn = fn_calculate_ppn((SELECT COALESCE(SUM(sub_total), 0) FROM detail_pengadaan WHERE idpengadaan = p_idpengadaan)),
+        total_nilai = subtotal_nilai + ppn
+    WHERE idpengadaan = p_idpengadaan;
+    -- Hitung ulang subtotal, PPN, dan total dari seluruh detail.
+END ;;
+-- Akhir SP simpan_pengadaan.
+
+DELIMITER ;
+-- Mengembalikan tanda akhir query.
