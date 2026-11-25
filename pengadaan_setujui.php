@@ -17,9 +17,11 @@ if ($id <= 0) {
 
 try {
     // Konfirmasi pengadaan: data detail barang yang ditampung di session
-    // baru dimasukkan ke tabel detail_pengadaan setelah tombol konfirmasi dipencet.
-    if (!empty($_SESSION['pending_pengadaan'][$id])) {
-        foreach ($_SESSION['pending_pengadaan'][$id] as $item) {
+    // (dalam bentuk JSON) baru dimasukkan ke tabel detail_pengadaan
+    // setelah tombol konfirmasi dipencet.
+    $dataPending = json_decode($_SESSION['pending_pengadaan'][$id] ?? '', true);
+    if (is_array($dataPending)) {
+        foreach ($dataPending as $item) {
             db_exec(
                 "INSERT INTO detail_pengadaan
                     (harga_satuan, jumlah, sub_total, idbarang, idpengadaan)

@@ -125,9 +125,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $daftarItems[(int) $idPengadaan] = $rows;
             }
 
-            // Menyimpan data detail pengadaan yang belum dikonfirmasi (di session).
+            // Menyimpan data detail pengadaan yang belum dikonfirmasi (di session, dalam bentuk JSON).
             foreach ($daftarItems as $idP => $rowsBarang) {
-                $_SESSION['pending_pengadaan'][(int) $idP] = $rowsBarang;
+                $_SESSION['pending_pengadaan'][(int) $idP] = json_encode($rowsBarang);
             }
 
             $pdo->commit();
