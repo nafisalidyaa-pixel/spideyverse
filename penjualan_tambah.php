@@ -1,11 +1,12 @@
 <?php
+// penjualan_tambah.php ⤳ transaksi penjualan: pilih banyak barang, hitung harga + PPN, simpan lewat SP.
 require_once __DIR__ . '/inc/auth.php';
 cek_role([1, 3]);
 
 $errors = [];
 $errorTrigger = '';
 
-// Membaca dari view: v_barang (definisi di database/05_view.sql)
+// Ambil barang yang aktif dari view v_barang (definisi di database/05_view.sql).
 $barang = db_all(
     "SELECT v.idbarang, v.nama, v.jenis, v.harga, v.stok
      FROM v_barang v
@@ -13,7 +14,7 @@ $barang = db_all(
      ORDER BY v.nama"
 );
 
-// Membaca dari view: v_margin_penjualan (definisi di database/05_view.sql)
+// Ambil margin pertama yang statusnya aktif dari view v_margin_penjualan (database/05_view.sql).
 $marginAuto = db_one(
     "SELECT m.idmargin_penjualan, m.persen
      FROM v_margin_penjualan m
@@ -27,13 +28,13 @@ $persenAuto   = $marginAuto ? (float) $marginAuto['persen'] : 0;
 
 $baris = $_POST['baris'] ?? [];
 
-/* =====================================================
-   PROSES PENJUALAN: KERANJANG (BANYAK BARANG)
-   Seluruh validasi & perhitungan berjalan di database.
-===================================================== */
+// Proses penjualan keranjang (banyak barang sekaligus).
+// Validasi stok & hitung harga jual + PPN sebenarnya dilakukan di database lewat SP + trigger.
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Kumpulkan baris yang diisi jadi array item buat dikirim ke SP.
     $items = [];
 
+    // Cek tiap baris form: barang harus dipilih dan jumlahnya lebih dari nol.
     foreach ($baris as $row) {
         $idbarang = (int) ($row['idbarang'] ?? 0);
         $jumlah   = (int) ($row['jumlah'] ?? 0);
@@ -53,14 +54,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $items[] = ['idbarang' => $idbarang, 'jumlah' => $jumlah];
     }
 
+    // Kalau nggak ada satu pun barang valid, gagal.
     if (!$items) {
         $errors[] = 'Minimal satu barang harus diisi.';
     }
 
+    // Semua valid → panggil stored procedure penjualan.
     if (!$errors) {
         try {
-            // Memanggil stored procedure: sp_tambah_penjualan_keranjang (definisi di database/04_sp.sql)
-            // SP memicu trigger trg_penjualan_validasi_stok & trg_penjualan_stok (database/02_trigger.sql)
+            // Catat query buat log internal, lalu CALL sp_tambah_penjualan_keranjang (database/04_sp.sql).
+            // SP ini yang insert penjualan + detail, hitung harga & PPN, lalu memicu trigger stok:
+            // trg_penjualan_validasi_stok (cek stok) dan trg_penjualan_stok (kurangi stok / kartu_stok jenis K).
             catat_query(
                 'CALL sp_tambah_penjualan_keranjang(?, ?, ?)',
                 [id_user(), $idmarginAuto, json_encode($items)]
@@ -71,21 +75,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $hasil = $stmt->fetch();
             $stmt->closeCursor();
 
+            // Kalau SP nggak balikin hasil, anggap gagal.
             if (!$hasil) {
                 throw new RuntimeException('Transaksi tidak dapat diselesaikan.');
             }
 
+            // Berhasil → flash + pindah ke halaman bukti transaksi.
             flash(
                 'sukses',
                 'Penjualan #' . $hasil['id_penjualan'] . ' berhasil diproses. Total ' . rupiah($hasil['total_pembayaran']) . '.'
             );
             redirect_dengan_log('penjualan_detail.php?id=' . (int) $hasil['id_penjualan']);
         } catch (PDOException $e) {
+            // Error dari SP/trigger (misal stok kurang) → tampilkan pesan ramah.
             $errorTrigger = pesan_db($e);
         }
     }
 }
 
+// Tampilkan halaman form penjualan.
 $JUDUL = 'Transaksi Penjualan';
 $AKTIF = 'penjualan_tambah.php';
 require __DIR__ . '/inc/header.php';
@@ -195,13 +203,16 @@ require __DIR__ . '/inc/header.php';
 </div>
 
 <script>
+// Nomor baris berikutnya buat nama input dinamis.
 let nomorBaris = 1;
 const MARGIN_PERSEN = <?= json_encode($persenAuto) ?>;
 
+// Format angka jadi rupiah.
 function rupiah(n) {
     return 'Rp ' + Number(n || 0).toLocaleString('id-ID');
 }
 
+// Isi stok & batas jumlah waktu barang dipilih.
 function isiHarga(select) {
     const baris = select.closest('.baris-item');
     const opsi = select.options[select.selectedIndex];
@@ -217,6 +228,7 @@ function isiHarga(select) {
     hitungTotal();
 }
 
+// Tambah satu baris barang baru.
 function tambahBaris() {
     const tbody = document.querySelector('#tabelItem tbody');
     const awal = tbody.querySelector('.baris-item');
@@ -236,6 +248,7 @@ function tambahBaris() {
     hitungTotal();
 }
 
+// Hapus baris, tapi sisakan minimal satu baris.
 function hapusBaris(btn) {
     const semua = document.querySelectorAll('.baris-item');
     if (semua.length <= 1) {
@@ -245,6 +258,7 @@ function hapusBaris(btn) {
     hitungTotal();
 }
 
+// Hitung harga jual per baris, subtotal, PPN 11%, dan total bayar.
 function hitungTotal() {
     let subtotal = 0;
 
@@ -274,6 +288,7 @@ function hitungTotal() {
     document.getElementById('teksTotal').textContent = rupiah(subtotal + ppn);
 }
 
+// Hitung sekali saat halaman dibuka.
 hitungTotal();
 </script>
 

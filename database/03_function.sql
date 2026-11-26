@@ -1,4 +1,5 @@
-﻿DROP FUNCTION IF EXISTS `fn_hitung_subtotal`;
+﻿-- 03_function.sql ⤳ 2 function bantu: fn_hitung_subtotal (harga x jumlah) dan fn_calculate_ppn (PPN 11%).
+DROP FUNCTION IF EXISTS `fn_hitung_subtotal`;
 -- hitung total harga = harga satuan dikali x jumlah barang
 DELIMITER ;;
 CREATE FUNCTION `fn_hitung_subtotal`(

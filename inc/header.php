@@ -1,10 +1,12 @@
 <?php
+// Header global: ambil user, role, dan susun menu sesuai role.
 $JUDUL = $JUDUL ?? 'Dashboard';
 $AKTIF = $AKTIF ?? '';
 $u = user_login();
 $role = id_role();
 $daftarRole = db_all('SELECT idrole, nama_role FROM role ORDER BY idrole');
 
+// Menu untuk Administrator.
 $menu = [];
 if ($role === 1) {
     $menu = [
@@ -34,6 +36,7 @@ if ($role === 1) {
         ],
     ];
 } elseif ($role === 2) {
+    // Menu untuk Staff Gudang.
     $menu = [
         'Utama' => [
             ['index.php', 'Dashboard'],
@@ -56,6 +59,7 @@ if ($role === 1) {
         ],
     ];
 } else {
+    // Menu untuk Kasir.
     $menu = [
         'Utama' => [
             ['index.php', 'Dashboard'],
@@ -83,6 +87,7 @@ if ($role === 1) {
 </head>
 <body>
 <div class="app">
+    <!-- Sidebar: brand + menu sesuai role. -->
     <aside class="sidebar">
         <div class="brand">
             <div class="logo"><?php include __DIR__ . '/logo_spider.php'; ?></div>
@@ -104,6 +109,7 @@ if ($role === 1) {
     </aside>
 
     <main class="konten">
+        <!-- Topbar: info role, tanggal, user, dan tombol keluar. -->
         <header class="topbar">
             <div class="topbar-utama">
                 <div class="topbar-meta">

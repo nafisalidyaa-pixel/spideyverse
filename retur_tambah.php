@@ -1,13 +1,17 @@
 <?php
+// retur_tambah.php ⤳ form retur baru: validasi sisa penerimaan & stok, lalu simpan retur.
 require_once __DIR__ . '/inc/auth.php';
 cek_role([1, 2]);
 
+// Siapkan variabel form + nilai awal dari POST (biar form nggak kosong kalau gagal).
 $errors = [];
 $idDetail = (int) ($_POST['iddetail_penerimaan'] ?? 0);
 $jumlah   = (int) ($_POST['jumlah'] ?? 1);
 $alasan   = trim((string) ($_POST['alasan'] ?? ''));
 
+// Proses cuma jalan kalau form dikirim lewat POST.
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Validasi dasar: item wajib dipilih, jumlah > 0, alasan wajib diisi.
     if ($idDetail <= 0) {
         $errors[] = 'Item penerimaan wajib dipilih.';
     }
@@ -18,6 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = 'Alasan retur wajib diisi.';
     }
 
+    // Kalau validasi dasar lolos, cek data penerimaan + hitung sisa & stok.
     if (!$errors) {
         $detail = db_one(
             "SELECT dpe.iddetail_penerimaan, dpe.idpenerimaan, dpe.barang_idbarang, dpe.jumlah_terima,
@@ -30,9 +35,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             [$idDetail]
         );
 
+        // Data penerimaan nggak ada? ya gagal.
         if (!$detail) {
             $errors[] = 'Data penerimaan tidak ditemukan.';
         } else {
+            // Sisa yang boleh diretur = jumlah terima dikurangi yang sudah pernah diretur,
+            // tapi tetap dibatasi stok yang masih ada (barang yang sudah terjual nggak bisa diretur).
             $sisa = (int) $detail['jumlah_terima'] - (int) $detail['sudah_retur'];
             $stok = (int) $detail['stok'];
             $maks = min($sisa, $stok);
@@ -44,18 +52,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
+    // Kalau semua valid, simpan retur dalam satu transaksi.
     if (!$errors) {
         try {
             $pdo->beginTransaction();
 
+            // Insert header retur dulu, lalu ambil id-nya.
             db_exec(
                 "INSERT INTO retur (idpenerimaan, iduser) VALUES (?, ?)",
                 [(int) $detail['idpenerimaan'], id_user()]
             );
             $idRetur = db_insert_id();
 
-            // Memicu trigger: trg_retur_stok (definisi di database/02_trigger.sql)
-            // Trigger memvalidasi sisa penerimaan & stok, lalu mengurangi stok (kartu_stok jenis R)
+            // Insert detail retur → memicu trigger trg_retur_stok (database/02_trigger.sql).
+            // Trigger yang validasi sisa penerimaan & stok, terus ngurangi stok (kartu_stok jenis R).
             db_exec(
                 "INSERT INTO detail_retur (jumlah, alasan, idretur, iddetail_penerimaan)
                  VALUES (?, ?, ?, ?)",
@@ -66,6 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flash('sukses', 'Retur #' . $idRetur . ' berhasil diproses.');
             redirect_dengan_log('retur_detail.php?id=' . $idRetur);
         } catch (PDOException $e) {
+            // Ada error (misal ditolak trigger) → rollback biar nggak setengah jadi.
             if ($pdo->inTransaction()) {
                 $pdo->rollBack();
             }
@@ -74,6 +85,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
+// Ambil semua item penerimaan yang bisa diretur + info barang, pengadaan, vendor,
+// plus hitung yang sudah diretur dan stok saat ini.
 $pilihan = db_all(
     "SELECT dpe.iddetail_penerimaan, dpe.idpenerimaan, dpe.jumlah_terima,
             b.nama, b.jenis, p.idpengadaan, v.nama_vendor,
@@ -89,12 +102,14 @@ $pilihan = db_all(
      ORDER BY dpe.iddetail_penerimaan DESC"
 );
 
+// Saring: cuma tampilkan yang masih ada sisa penerimaan dan stoknya.
 $pilihan = array_values(array_filter(
     $pilihan,
     fn($d) => ((int) $d['jumlah_terima'] - (int) $d['sudah_retur']) > 0
         && (int) $d['stok'] > 0
 ));
 
+// Tampilkan halaman form retur.
 $JUDUL = 'Buat Retur Baru';
 $AKTIF = 'retur.php';
 require __DIR__ . '/inc/header.php';
@@ -160,6 +175,7 @@ require __DIR__ . '/inc/header.php';
 </div>
 
 <script>
+// Ambil option yang lagi dipilih di dropdown item penerimaan.
 function ambilOpsi() {
     const pilih = document.getElementById('pilih');
     if (!pilih || !pilih.value) {
@@ -168,6 +184,7 @@ function ambilOpsi() {
     return pilih.options[pilih.selectedIndex];
 }
 
+// Tampilkan info sisa penerimaan, stok tersedia, dan batas maksimal retur.
 function tampilSisa() {
     const opsi = ambilOpsi();
     const info = document.getElementById('infoSisa');
@@ -196,6 +213,7 @@ function tampilSisa() {
     }
 }
 
+// Cek jumlah retur di browser sebelum form dikirim (validasi server tetap jalan).
 function cekJumlah() {
     const opsi = ambilOpsi();
     if (!opsi) {
@@ -211,6 +229,7 @@ function cekJumlah() {
     return true;
 }
 
+// Jalankan sekali saat halaman dibuka.
 tampilSisa();
 </script>
 

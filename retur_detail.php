@@ -1,9 +1,12 @@
 <?php
+// retur_detail.php ⤳ detail satu retur: header retur + daftar barang yang diretur.
 require_once __DIR__ . '/inc/auth.php';
 cek_role([1, 2]);
 
+// Ambil id retur dari URL.
 $id = (int) ($_GET['id'] ?? 0);
 
+// Ambil header retur + relasi user, penerimaan, pengadaan, dan vendor.
 $header = db_one(
     "SELECT r.idretur, r.created_at, r.idpenerimaan, u.username,
             v.nama_vendor, pr.created_at AS tgl_penerimaan
@@ -16,12 +19,14 @@ $header = db_one(
     [$id]
 );
 
+// Kalau retur nggak ketemu, balik ke daftar pakai flash.
 if (!$header) {
     flash('error', 'Retur tidak ditemukan.');
     header('Location: retur.php');
     exit;
 }
 
+// Ambil detail barang retur + data penerimaan asal + nama & jenis barang.
 $detail = db_all(
     "SELECT dr.iddetail_retur, dr.jumlah, dr.alasan, dr.iddetail_penerimaan,
             dpe.jumlah_terima, dpe.harga_satuan_terima,
@@ -34,6 +39,7 @@ $detail = db_all(
     [$id]
 );
 
+// Tampilkan halaman detail retur.
 $JUDUL = 'Detail Retur #' . $id;
 $AKTIF = 'retur.php';
 require __DIR__ . '/inc/header.php';

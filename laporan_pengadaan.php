@@ -1,7 +1,9 @@
  <?php
+// laporan_pengadaan.php ⤳ laporan pengadaan per periode + rekap per vendor.
 require_once __DIR__ . '/inc/auth.php';
 cek_role([1, 2]);
 
+// Ambil rentang tanggal dari filter; kalau nggak valid pakai default bulan ini.
 $dari = $_GET['dari'] ?? date('Y-m-01');
 $sampai = $_GET['sampai'] ?? date('Y-m-d');
 if (!tanggal_valid($dari)) {
@@ -11,6 +13,7 @@ if (!tanggal_valid($sampai)) {
     $sampai = date('Y-m-d');
 }
 
+// Ambil pengadaan dalam periode + vendor/user + hitung item & kuantitas.
 $pengadaan = db_all(
     "SELECT p.idpengadaan, p.timestamp, p.status, p.subtotal_nilai, p.ppn, p.total_nilai,
             v.nama_vendor, u.username,
@@ -26,10 +29,12 @@ $pengadaan = db_all(
     [$dari, $sampai]
 );
 
+// Hitung ringkasan: jumlah pengadaan, total kuantitas, dan total nilai.
 $totalPengadaan = count($pengadaan);
 $totalKuantitas = array_sum(array_map(fn($r) => (int) $r['kuantitas'], $pengadaan));
 $totalNilai = array_sum(array_map(fn($r) => (int) $r['total_nilai'], $pengadaan));
 
+// Rekap pengadaan per vendor dalam periode yang sama.
 $perVendor = db_all(
     "SELECT v.nama_vendor, COUNT(*) AS jml_pengadaan, SUM(p.total_nilai) AS total
      FROM pengadaan p
@@ -40,6 +45,7 @@ $perVendor = db_all(
     [$dari, $sampai]
 );
 
+// Tampilkan halaman laporan pengadaan.
 $JUDUL = 'Laporan Pengadaan';
 $AKTIF = 'laporan_pengadaan.php';
 require __DIR__ . '/inc/header.php';

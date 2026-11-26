@@ -1,9 +1,12 @@
 <?php
+// laporan_stok.php ⤳ laporan stok barang: total masuk, keluar, dan stok akhir per barang.
 require_once __DIR__ . '/inc/auth.php';
 cek_role([1, 2, 3]);
 
+// Ambil filter jenis barang dari URL.
 $jenis = trim($_GET['jenis'] ?? '');
 
+// Kalau jenis valid, saring laporan per jenis.
 $where = '';
 $params = [];
 if ($jenis !== '' && isset(jenis_barang()[$jenis])) {
@@ -11,6 +14,7 @@ if ($jenis !== '' && isset(jenis_barang()[$jenis])) {
     $params[] = $jenis;
 }
 
+// Hitung stok dari kartu_stok: SUM(masuk) - SUM(keluar), dikelompokkan per barang.
 $laporan = db_all(
     "SELECT b.idbarang, b.jenis, b.nama, s.nama_satuan, b.harga,
             COALESCE(SUM(ks.masuk), 0) AS total_masuk,
@@ -25,10 +29,12 @@ $laporan = db_all(
     $params
 );
 
+// Hitung ringkasan total masuk, keluar, dan stok akhir semua barang.
 $totalMasuk = array_sum(array_map(fn($r) => (int) $r['total_masuk'], $laporan));
 $totalKeluar = array_sum(array_map(fn($r) => (int) $r['total_keluar'], $laporan));
 $totalStok = array_sum(array_map(fn($r) => (int) $r['stok_akhir'], $laporan));
 
+// Tampilkan halaman laporan stok.
 $JUDUL = 'Laporan Stok Barang';
 $AKTIF = 'laporan_stok.php';
 require __DIR__ . '/inc/header.php';

@@ -1,7 +1,9 @@
 <?php
+// penjualan.php ⤳ riwayat penjualan: kasir cuma lihat miliknya, admin lihat semua.
 require_once __DIR__ . '/inc/auth.php';
 cek_role([1, 3]);
 
+// Kalau yang login kasir (role 3), saring cuma transaksi miliknya sendiri.
 $params = [];
 $where = '';
 if (id_role() === 3) {
@@ -9,6 +11,7 @@ if (id_role() === 3) {
     $params[] = id_user();
 }
 
+// Ambil daftar penjualan + nama kasir + margin + total item per transaksi.
 $daftar = db_all(
     "SELECT p.idpenjualan, p.created_at, p.subtotal_nilai, p.ppn, p.total_nilai,
             u.username, m.persen,
@@ -22,6 +25,7 @@ $daftar = db_all(
     $params
 );
 
+// Tampilkan halaman riwayat penjualan.
 $JUDUL = 'Riwayat Penjualan';
 $AKTIF = 'penjualan.php';
 require __DIR__ . '/inc/header.php';

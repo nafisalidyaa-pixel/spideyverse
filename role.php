@@ -1,3 +1,2 @@
 <?php
-$master = 'role';
-require __DIR__ . '/inc/crud_list.php';
+// Daftar master role. `$master='role'`, panggil `inc/crud_list.php`.

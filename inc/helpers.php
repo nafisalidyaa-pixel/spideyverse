@@ -1,28 +1,29 @@
 <?php
-/**
- * Fungsi bantu: escaping, format, query mentah, log query untuk presentasi.
- */
+// Kumpulan fungsi bantu: escape, format tampilan, query mentah, dan log query.
 
+// Nyalakan session kalau belum ada.
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+// Set zona waktu ke Jakarta.
 date_default_timezone_set('Asia/Jakarta');
 
-/* =========================
-   FORMAT & TAMPILAN
-========================= */
+// Format & tampilan
 
+// Escape teks biar aman waktu ditampilin di HTML.
 function e($value): string
 {
     return htmlspecialchars((string) ($value ?? ''), ENT_QUOTES, 'UTF-8');
 }
 
+// Format angka jadi Rupiah.
 function rupiah($nilai): string
 {
     return 'Rp ' . number_format((float) $nilai, 0, ',', '.');
 }
 
+// Format tanggal ke dd-mm-yyyy HH:ii.
 function tanggal($nilai): string
 {
     if (!$nilai) {
@@ -31,6 +32,7 @@ function tanggal($nilai): string
     return date('d-m-Y H:i', strtotime($nilai));
 }
 
+// Tanggal lengkap pakai nama hari & bulan Indonesia.
 function tanggal_indonesia(?string $waktu = null): string
 {
     $ts = $waktu ? strtotime($waktu) : time();
@@ -50,17 +52,20 @@ function tanggal_indonesia(?string $waktu = null): string
         . date('Y', $ts);
 }
 
+// Cek apakah teks tanggal valid format Y-m-d.
 function tanggal_valid(string $teks): bool
 {
     $d = DateTime::createFromFormat('Y-m-d', $teks);
     return $d instanceof DateTime && $d->format('Y-m-d') === $teks;
 }
 
+// Hitung panjang teks, pakai mb_strlen kalau ada.
 function panjang_teks(string $teks): int
 {
     return function_exists('mb_strlen') ? mb_strlen($teks) : strlen($teks);
 }
 
+// Daftar kode jenis barang A–J.
 function jenis_barang(): array
 {
     return [
@@ -77,6 +82,7 @@ function jenis_barang(): array
     ];
 }
 
+// Badge stok: habis / rendah / aman.
 function badge_stok($stok): string
 {
     $stok = (int) $stok;
@@ -89,6 +95,7 @@ function badge_stok($stok): string
     return '<span class="badge badge-hijau">Aman</span>';
 }
 
+// Badge status pengadaan: disetujui / menunggu.
 function badge_status_pengadaan($status): string
 {
     return $status === 'A'
@@ -96,6 +103,7 @@ function badge_status_pengadaan($status): string
         : '<span class="badge badge-kuning">Menunggu</span>';
 }
 
+// Badge jenis mutasi stok M/K/R.
 function badge_jenis_transaksi($jenis): string
 {
     $map = [
@@ -107,15 +115,15 @@ function badge_jenis_transaksi($jenis): string
     return '<span class="badge ' . $kelas . '">' . $label . '</span>';
 }
 
-/* =========================
-   FLASH MESSAGE
-========================= */
+// Flash message
 
+// Simpan pesan flash ke session.
 function flash(string $tipe, string $pesan): void
 {
     $_SESSION['flash'][] = ['tipe' => $tipe, 'pesan' => $pesan];
 }
 
+// Ambil semua flash lalu kosongkan session-nya.
 function ambil_flash(): array
 {
     $flash = $_SESSION['flash'] ?? [];
@@ -123,9 +131,7 @@ function ambil_flash(): array
     return $flash;
 }
 
-/**
- * Menampilkan notifikasi sebagai dialog popup yang ditutup dengan tombol OK.
- */
+// Tampilkan flash sebagai popup, tutup pakai OK/Esc.
 function render_flash(): void
 {
     $flash = ambil_flash();
@@ -177,19 +183,15 @@ function render_flash(): void
         . '</script>';
 }
 
-/* =========================
-   QUERY MENTAH + LOG QUERY
-========================= */
+// Query mentah + log query
 
+// Catat query ke log internal.
 function catat_query(string $sql, array $params = []): void
 {
     $GLOBALS['QUERY_LOG'][] = ['sql' => $sql, 'params' => $params];
 }
 
-/**
- * Mengganti tanda ? dengan nilai asli, hanya untuk ditampilkan di halaman.
- * Eksekusi tetap memakai prepared statement.
- */
+// Isi tanda ? dengan nilai asli, cuma buat tampilan/log.
 function sql_lengkap(string $sql, array $params = []): string
 {
     $i = 0;
@@ -205,6 +207,7 @@ function sql_lengkap(string $sql, array $params = []): string
     }, $sql);
 }
 
+// Ambil semua baris hasil query.
 function db_all(string $sql, array $params = []): array
 {
     global $pdo;
@@ -215,6 +218,7 @@ function db_all(string $sql, array $params = []): array
     return $stmt->fetchAll();
 }
 
+// Ambil satu baris hasil query.
 function db_one(string $sql, array $params = []): ?array
 {
     global $pdo;
@@ -226,12 +230,14 @@ function db_one(string $sql, array $params = []): ?array
     return $row === false ? null : $row;
 }
 
+// Ambil satu nilai dari hasil query.
 function db_val(string $sql, array $params = [])
 {
     $row = db_one($sql, $params);
     return $row === null ? null : reset($row);
 }
 
+// Jalankan INSERT/UPDATE/DELETE, balikin jumlah baris kena.
 function db_exec(string $sql, array $params = []): int
 {
     global $pdo;
@@ -241,15 +247,14 @@ function db_exec(string $sql, array $params = []): int
     return $stmt->rowCount();
 }
 
+// Ambil ID terakhir yang baru di-insert.
 function db_insert_id(): int
 {
     global $pdo;
     return (int) $pdo->lastInsertId();
 }
 
-/**
- * Pesan error database yang ramah untuk pengguna.
- */
+// Ubah error database jadi pesan yang ramah.
 function pesan_db(PDOException $e): string
 {
     $kode = $e->errorInfo[1] ?? 0;
@@ -273,10 +278,9 @@ function pesan_db(PDOException $e): string
     return 'Terjadi kesalahan saat memproses data. Silakan coba lagi.';
 }
 
-/* =========================
-   LOG QUERY LINTAS REDIRECT
-========================= */
+// Log query lintas redirect
 
+// Simpan log query ke session lalu redirect.
 function redirect_dengan_log(string $url): void
 {
     $_SESSION['query_lalu'] = $GLOBALS['QUERY_LOG'] ?? [];
@@ -284,6 +288,7 @@ function redirect_dengan_log(string $url): void
     exit;
 }
 
+// Ambil log query dari redirect sebelumnya.
 function ambil_query_lalu(): void
 {
     if (!empty($_SESSION['query_lalu'])) {

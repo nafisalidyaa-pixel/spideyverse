@@ -1,7 +1,9 @@
     </main>
 </div>
 <script>
+// Semua script jalan setelah halaman selesai dimuat.
 document.addEventListener('DOMContentLoaded', function () {
+    // Kasih efek loading ke tombol submit biar user tahu proses jalan.
     document.querySelectorAll('form[method="post"]').forEach(function (form) {
         form.addEventListener('submit', function (event) {
             if (event.defaultPrevented) {
@@ -13,6 +15,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
+            // Kasih jeda sedikit supaya perubahan tombol kelihatan.
             window.setTimeout(function () {
                 if (tombol.disabled) {
                     return;
@@ -24,12 +27,14 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
+    // Efek ripple waktu tombol/menu diklik.
     document.addEventListener('click', function (event) {
         var target = event.target.closest('.btn, .notif-ok, .menu a');
         if (!target) {
             return;
         }
 
+        // Bikin lingkaran ripple sesuai posisi klik.
         var kotak = target.getBoundingClientRect();
         var ukuran = Math.max(kotak.width, kotak.height);
         var riak = document.createElement('span');
@@ -40,6 +45,7 @@ document.addEventListener('DOMContentLoaded', function () {
         riak.style.top = (event.clientY - kotak.top - ukuran / 2) + 'px';
 
         target.appendChild(riak);
+        // Hapus ripple setelah animasinya selesai.
         window.setTimeout(function () {
             riak.remove();
         }, 620);

@@ -1,7 +1,9 @@
 <?php
+// retur.php ⤳ daftar retur barang: nampilin semua retur + jumlah item dan total kuantitas.
 require_once __DIR__ . '/inc/auth.php';
 cek_role([1, 2]);
 
+// Ambil semua retur + nama user pencatat + hitung jumlah item & total kuantitas per retur.
 $daftar = db_all(
     "SELECT r.idretur, r.created_at, r.idpenerimaan, u.username,
             (SELECT COUNT(*) FROM detail_retur d WHERE d.idretur = r.idretur) AS jml_item,
@@ -12,6 +14,7 @@ $daftar = db_all(
      ORDER BY r.idretur DESC"
 );
 
+// Tampilkan halaman daftar retur.
 $JUDUL = 'Retur Barang';
 $AKTIF = 'retur.php';
 require __DIR__ . '/inc/header.php';

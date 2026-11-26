@@ -1,7 +1,8 @@
-﻿-- SPIDEYVERSE - View
+﻿-- 05_view.sql ⤳ 6 view siap pakai buat baca data + hitungan (stok, jumlah relasi, status).
 -- Jalankan paling akhir, setelah 01_tabel.sql - 04_sp.sql.
 USE spideyverse;
 
+-- v_barang: barang + satuan + kategori + stok hasil SUM kartu_stok.
 DROP VIEW IF EXISTS `v_barang`;
 CREATE VIEW `v_barang` AS
 SELECT
@@ -34,6 +35,7 @@ SELECT
 FROM `barang` b
 LEFT JOIN `satuan` s ON s.`idsatuan` = b.`idsatuan`;
 
+-- v_satuan: satuan + status + jumlah barang yang pakai satuan itu.
 DROP VIEW IF EXISTS `v_satuan`;
 CREATE VIEW `v_satuan` AS
 SELECT
@@ -44,6 +46,7 @@ SELECT
     (SELECT COUNT(*) FROM `barang` b WHERE b.`idsatuan` = s.`idsatuan`) AS `jumlah_barang`
 FROM `satuan` s;
 
+-- v_vendor: vendor + status + jumlah pengadaan yang pernah dibuat.
 DROP VIEW IF EXISTS `v_vendor`;
 CREATE VIEW `v_vendor` AS
 SELECT
@@ -55,6 +58,7 @@ SELECT
     (SELECT COUNT(*) FROM `pengadaan` p WHERE p.`vendor_idvendor` = v.`idvendor`) AS `jumlah_pengadaan`
 FROM `vendor` v;
 
+-- v_role: role + jumlah user yang pakai role itu.
 DROP VIEW IF EXISTS `v_role`;
 CREATE VIEW `v_role` AS
 SELECT
@@ -63,6 +67,7 @@ SELECT
     (SELECT COUNT(*) FROM `user` u WHERE u.`idrole` = r.`idrole`) AS `jumlah_user`
 FROM `role` r;
 
+-- v_user: user + nama role + jumlah penjualan yang pernah dicatat.
 DROP VIEW IF EXISTS `v_user`;
 CREATE VIEW `v_user` AS
 SELECT
@@ -74,6 +79,7 @@ SELECT
 FROM `user` u
 LEFT JOIN `role` r ON r.`idrole` = u.`idrole`;
 
+-- v_margin_penjualan: margin + status + username pembuat + jumlah penjualan yang pakai margin ini.
 DROP VIEW IF EXISTS `v_margin_penjualan`;
 CREATE VIEW `v_margin_penjualan` AS
 SELECT

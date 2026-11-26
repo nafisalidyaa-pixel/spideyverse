@@ -1,7 +1,9 @@
 <?php
+// laporan_retur.php ⤳ laporan retur per periode + total kuantitas yang diretur.
 require_once __DIR__ . '/inc/auth.php';
 cek_role([1, 2]);
 
+// Ambil rentang tanggal dari filter; kalau nggak valid pakai default bulan ini.
 $dari = $_GET['dari'] ?? date('Y-m-01');
 $sampai = $_GET['sampai'] ?? date('Y-m-d');
 if (!tanggal_valid($dari)) {
@@ -11,6 +13,7 @@ if (!tanggal_valid($sampai)) {
     $sampai = date('Y-m-d');
 }
 
+// Ambil retur dalam periode + detail barang + relasi penerimaan/pengadaan/vendor/user.
 $retur = db_all(
     "SELECT r.idretur, r.created_at, r.idpenerimaan, u.username, v.nama_vendor,
             dr.jumlah, dr.alasan, b.nama, b.jenis, b.idbarang
@@ -27,9 +30,11 @@ $retur = db_all(
     [$dari, $sampai]
 );
 
+// Hitung ringkasan: jumlah retur unik + total kuantitas yang diretur.
 $totalRetur = count(array_unique(array_column($retur, 'idretur')));
 $totalKuantitas = array_sum(array_map(fn($r) => (int) $r['jumlah'], $retur));
 
+// Tampilkan halaman laporan retur.
 $JUDUL = 'Laporan Retur';
 $AKTIF = 'laporan_retur.php';
 require __DIR__ . '/inc/header.php';

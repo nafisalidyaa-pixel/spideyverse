@@ -1,7 +1,9 @@
 <?php
+// Detail pengadaan: tampilkan header, detail barang, dan jumlah yang sudah diterima.
 require_once __DIR__ . '/inc/auth.php';
 cek_role([1, 2]);
 
+// Ambil header pengadaan + vendor + user.
 $id = (int) ($_GET['id'] ?? 0);
 $header = db_one(
     "SELECT p.*, v.nama_vendor, u.username
@@ -12,12 +14,14 @@ $header = db_one(
     [$id]
 );
 
+// Kalau data tidak ada, balik ke daftar.
 if (!$header) {
     flash('error', 'Pengadaan tidak ditemukan.');
     header('Location: pengadaan.php');
     exit;
 }
 
+// Ambil detail barang + hitung jumlah yang sudah diterima per barang.
 $detail = db_all(
     "SELECT dp.iddetail_pengadaan, dp.harga_satuan, dp.jumlah, dp.sub_total, dp.idbarang,
             b.nama, b.jenis,
@@ -33,6 +37,7 @@ $detail = db_all(
     [$id]
 );
 
+// Tampilkan halaman.
 $JUDUL = 'Detail Pengadaan #' . $id;
 $AKTIF = 'pengadaan.php';
 require __DIR__ . '/inc/header.php';
@@ -51,6 +56,7 @@ require __DIR__ . '/inc/header.php';
         </div>
         <div class="aksi">
             <a class="btn btn-outline" href="pengadaan.php">Kembali</a>
+            <?php // Kalau masih menunggu, tampilkan tombol setujui; kalau sudah A, tombol terima. ?>
             <?php if ($header['status'] === 'P'): ?>
                 <form method="post" action="pengadaan_setujui.php">
                     <input type="hidden" name="id" value="<?= (int) $id ?>">
@@ -87,6 +93,7 @@ require __DIR__ . '/inc/header.php';
         </table>
     </div>
 
+    <?php // Ringkasan nilai pengadaan. ?>
     <div class="panel-putih panel mt">
         <div class="teks-kanan">
             <div>Subtotal: <b><?= rupiah($header['subtotal_nilai']) ?></b></div>

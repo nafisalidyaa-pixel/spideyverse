@@ -1,8 +1,7 @@
 <?php
-/**
- * Form tambah / edit master data. Halaman terpisah untuk tiap proses.
- */
+// Form tambah/edit master data. Halaman terpisah untuk tiap proses.
 
+// Ambil auth, config master, dan cek role yang boleh edit.
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/crud.php';
 
@@ -10,14 +9,17 @@ $cfg = master_config($master);
 cek_role($cfg['edit_roles']);
 $dasar = basename($cfg['halaman'], '.php');
 
+// Tentukan mode edit kalau ada id, kalau tidak berarti tambah.
 $id = (int) ($_POST['id'] ?? $_GET['id'] ?? 0);
 $edit = $id > 0;
 
+// Siapkan nilai default tiap field.
 $data = [];
 foreach ($cfg['fields'] as $field) {
     $data[$field['name']] = $field['default'] ?? '';
 }
 
+// Kalau mode edit, ambil data lama dari tabel.
 if ($edit) {
     $row = db_one(
         "SELECT * FROM `{$cfg['tabel']}` WHERE `{$cfg['pk']}` = ?",
@@ -37,11 +39,14 @@ if ($edit) {
 
 $errors = [];
 
+// Proses simpan: ambil input, validasi, lalu insert/update.
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Ambil semua input sesuai field config.
     foreach ($cfg['fields'] as $field) {
         $data[$field['name']] = trim((string) ($_POST[$field['name']] ?? ''));
     }
 
+    // Validasi wajib isi, panjang maksimal, angka, dan nilai minimal.
     foreach ($cfg['fields'] as $field) {
         $name = $field['name'];
         $nilai = $data[$name];
@@ -64,6 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
+    // Jalankan validasi khusus kalau config menyediakan.
     if (!$errors && isset($cfg['validasi'])) {
         $pesan = $cfg['validasi']($data, $id);
         if ($pesan !== null) {
@@ -71,9 +77,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
+    // Kalau valid, simpan ke database.
     if (!$errors) {
         try {
             if ($edit) {
+                // Mode edit: update kolom sesuai field.
                 $set = [];
                 $params = [];
                 foreach ($cfg['fields'] as $field) {
@@ -87,6 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 );
                 flash('sukses', $cfg['judul'] . ' berhasil diperbarui.');
             } else {
+                // Mode tambah: insert semua field.
                 $kolom = [];
                 $placeholder = [];
                 $params = [];
@@ -110,6 +119,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
+// Tampilkan halaman form.
 $JUDUL = ($edit ? 'Edit ' : 'Tambah ') . $cfg['judul'];
 $AKTIF = $cfg['halaman'];
 require __DIR__ . '/header.php';

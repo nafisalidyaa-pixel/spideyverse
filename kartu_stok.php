@@ -1,10 +1,13 @@
 <?php
+// kartu_stok.php ⤳ kartu stok: daftar mutasi masuk/keluar barang + sisa stok tercatat.
 require_once __DIR__ . '/inc/auth.php';
 cek_role([1, 2, 3]);
 
+// Ambil filter dari URL: barang dan jenis transaksi (M/K/R).
 $idbarang = (int) ($_GET['barang'] ?? 0);
 $jenis    = trim($_GET['jenis'] ?? '');
 
+// Susun kondisi filter secara dinamis.
 $where = [];
 $params = [];
 
@@ -17,6 +20,7 @@ if (in_array($jenis, ['M', 'K', 'R'], true)) {
     $params[] = $jenis;
 }
 
+// Query dasar: semua mutasi kartu_stok + nama barang.
 $sql =
     "SELECT t.* FROM (
         SELECT ks.idkartu_stok, ks.created_at, ks.jenis_transaksi, ks.masuk, ks.keluar,
@@ -25,14 +29,17 @@ $sql =
         JOIN barang b ON b.idbarang = ks.idbarang
      ) t";
 
+// Tempel filter kalau ada, lalu batasi 300 baris terbaru.
 if ($where) {
     $sql .= ' WHERE ' . implode(' AND ', $where);
 }
 $sql .= ' ORDER BY t.idkartu_stok DESC LIMIT 300';
 
+// Ambil data mutasi + daftar barang buat dropdown filter.
 $mutasi = db_all($sql, $params);
 $daftarBarang = db_all("SELECT idbarang, nama FROM barang ORDER BY nama");
 
+// Tampilkan halaman kartu stok.
 $JUDUL = 'Kartu Stok';
 $AKTIF = 'kartu_stok.php';
 require __DIR__ . '/inc/header.php';

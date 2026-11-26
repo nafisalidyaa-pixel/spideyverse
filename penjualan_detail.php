@@ -1,9 +1,12 @@
 <?php
+// penjualan_detail.php ⤳ bukti transaksi: header penjualan + rincian item + total bayar.
 require_once __DIR__ . '/inc/auth.php';
 cek_role([1, 3]);
 
+// Ambil id penjualan dari URL.
 $id = (int) ($_GET['id'] ?? 0);
 
+// Ambil header penjualan + nama kasir + margin yang dipakai.
 $header = db_one(
     "SELECT p.*, u.username, m.persen
      FROM penjualan p
@@ -13,18 +16,21 @@ $header = db_one(
     [$id]
 );
 
+// Transaksi nggak ketemu? balik ke riwayat.
 if (!$header) {
     flash('error', 'Transaksi tidak ditemukan.');
     header('Location: penjualan.php');
     exit;
 }
 
+// Kasir cuma boleh buka transaksi miliknya sendiri.
 if (id_role() === 3 && (int) $header['iduser'] !== id_user()) {
     flash('error', 'Anda hanya dapat melihat transaksi milik Anda.');
     header('Location: penjualan.php');
     exit;
 }
 
+// Ambil rincian item + nama barang + satuan.
 $detail = db_all(
     "SELECT dp.iddetail_penjualan, dp.harga_satuan, dp.jumlah, dp.subtotal,
             b.idbarang, b.nama, b.jenis, s.nama_satuan
@@ -36,6 +42,7 @@ $detail = db_all(
     [$id]
 );
 
+// Tampilkan halaman bukti transaksi.
 $JUDUL = 'Bukti Transaksi';
 $AKTIF = 'penjualan.php';
 require __DIR__ . '/inc/header.php';

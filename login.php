@@ -1,13 +1,18 @@
 <?php
+// Halaman login: cek username/password, lalu simpan data user ke session.
+
+// Panggil koneksi dan helper.
 require_once __DIR__ . '/inc/koneksi.php';
 require_once __DIR__ . '/inc/helpers.php';
 
+// Kalau datang dari ganti role (?role=), ambil info role-nya.
 $idRolePilihan = (int) ($_GET['role'] ?? 0);
 $rolePilihan = null;
 if ($idRolePilihan > 0) {
     $rolePilihan = db_one('SELECT idrole, nama_role FROM role WHERE idrole = ?', [$idRolePilihan]);
 }
 
+// Kalau sudah login, langsung ke dashboard.
 if (!empty($_SESSION['user'])) {
     header('Location: index.php');
     exit;
@@ -15,14 +20,17 @@ if (!empty($_SESSION['user'])) {
 
 $error = '';
 
+// Proses login saat form dikirim.
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = trim($_POST['username'] ?? '');
     $password = (string) ($_POST['password'] ?? '');
 
+    // Username dan password wajib diisi.
     if ($username === '' || $password === '') {
         $error = 'Username dan password wajib diisi.';
     } else {
         try {
+            // Ambil user + role berdasarkan username.
             $stmt = $pdo->prepare(
                 "SELECT u.iduser, u.username, u.password, u.idrole, r.nama_role
                  FROM `user` u
@@ -33,9 +41,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute([$username]);
             $data = $stmt->fetch();
 
+            // Cocokkan password (case-sensitive pakai hash_equals).
             if (!$data || !hash_equals((string) $data['password'], $password)) {
                 $error = 'Username atau password salah.';
             } else {
+                // Login sukses: amankan session dan simpan data user.
                 session_regenerate_id(true);
                 $_SESSION['user'] = [
                     'iduser'    => (int) $data['iduser'],
@@ -68,6 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body>
 <?php render_flash(); ?>
+<!-- Kotak login. -->
 <div class="login-wrap">
     <div class="login-kotak">
         <div class="brand">
@@ -90,6 +101,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="alert alert-error"><?= e($error) ?></div>
         <?php endif; ?>
 
+        <!-- Form login. -->
         <form method="post" action="login.php">
             <div class="form-grid" style="grid-template-columns:1fr">
                 <div>
@@ -109,6 +121,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 </div>
 <script>
+// Efek loading di tombol login biar user tahu proses jalan.
 document.querySelector('.login-kotak form').addEventListener('submit', function () {
     var tombol = this.querySelector('button[type="submit"]');
     if (!tombol) {

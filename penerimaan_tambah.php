@@ -1,20 +1,21 @@
 <?php
+// Tambah penerimaan: catat barang masuk, lalu trigger menambah stok.
 require_once __DIR__ . '/inc/auth.php';
 cek_role([1, 2]);
 
 $errors = [];
 $idpengadaan = (int) ($_POST['idpengadaan'] ?? $_GET['pengadaan'] ?? 0);
 
-/* =====================================================
-   PROSES SIMPAN PENERIMAAN
-===================================================== */
+// Proses simpan penerimaan
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $terima = $_POST['terima'] ?? [];
 
+    // Pengadaan wajib valid.
     if ($idpengadaan <= 0) {
         $errors[] = 'Pengadaan tidak valid.';
     }
 
+    // Cek pengadaan ada dan statusnya sudah disetujui (A).
     $header = null;
     if (!$errors) {
         $header = db_one(
@@ -28,6 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
+    // Validasi jumlah terima per item.
     $items = [];
     if (!$errors) {
         $detail = db_all(
@@ -71,16 +73,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
+    // Simpan penerimaan + detail dalam satu transaksi.
     if (!$errors) {
         try {
             $pdo->beginTransaction();
 
+            // Simpan header penerimaan.
             db_exec(
                 "INSERT INTO penerimaan (status, idpengadaan, iduser) VALUES ('A', ?, ?)",
                 [$idpengadaan, id_user()]
             );
             $idPenerimaan = db_insert_id();
 
+            // Simpan detail; trigger trg_penerimaan_stok otomatis menambah stok.
             foreach ($items as $item) {
                 // Memanggil function: fn_hitung_subtotal (definisi di database/03_function.sql)
                 $subtotal = (int) db_val(
@@ -110,12 +115,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-/* =====================================================
-   DATA UNTUK TAMPILAN
-===================================================== */
+// Data untuk tampilan
 $header = null;
 $detail = [];
 
+// Kalau ada id pengadaan, ambil header + detail yang belum diterima penuh.
 if ($idpengadaan > 0) {
     $header = db_one(
         "SELECT p.idpengadaan, p.timestamp, p.status, v.nama_vendor, p.total_nilai
@@ -143,6 +147,7 @@ if ($idpengadaan > 0) {
     }
 }
 
+// Kalau belum pilih pengadaan, tampilkan daftar pengadaan yang siap diterima.
 $daftarPengadaan = [];
 if ($idpengadaan === 0) {
     $daftarPengadaan = db_all(
@@ -165,6 +170,7 @@ if ($idpengadaan === 0) {
     );
 }
 
+// Tampilkan halaman.
 $JUDUL = 'Penerimaan Barang Baru';
 $AKTIF = 'penerimaan.php';
 require __DIR__ . '/inc/header.php';
@@ -175,6 +181,7 @@ require __DIR__ . '/inc/header.php';
 <?php endforeach; ?>
 
 <?php if ($idpengadaan === 0): ?>
+    <?php // Belum pilih pengadaan: tampilkan daftar pilihan. ?>
     <div class="panel">
         <h2>Pilih Pengadaan yang Disetujui</h2>
         <div class="tabel-wrap">
@@ -213,16 +220,19 @@ require __DIR__ . '/inc/header.php';
     </div>
 <?php else: ?>
     <?php if (!$header): ?>
+        <?php // Pengadaan tidak ditemukan. ?>
         <div class="panel">
             <div class="alert alert-error">Pengadaan tidak ditemukan.</div>
             <a class="btn btn-outline" href="penerimaan_tambah.php">Kembali</a>
         </div>
     <?php elseif ($header['status'] !== 'A'): ?>
+        <?php // Pengadaan belum disetujui. ?>
         <div class="panel">
             <div class="alert alert-error">Pengadaan belum disetujui. Setujui dulu di halaman Pengadaan.</div>
             <a class="btn btn-outline" href="pengadaan_detail.php?id=<?= (int) $idpengadaan ?>">Buka Pengadaan</a>
         </div>
     <?php else: ?>
+        <?php // Form penerimaan. ?>
         <div class="panel">
             <div class="judul-halaman">
                 <div>

@@ -1,7 +1,9 @@
 <?php
+// Buat pengadaan baru: pilih barang, vendor otomatis, simpan header, detail ditampung di session.
 require_once __DIR__ . '/inc/auth.php';
 cek_role([1, 2]);
 
+// Ambil vendor aktif dan barang aktif buat pilihan form.
 $daftarVendor = db_all("SELECT idvendor, nama_vendor FROM vendor WHERE status = 'A' ORDER BY idvendor");
 $barang = db_all("SELECT idbarang, nama, jenis, harga FROM barang WHERE status = 1 ORDER BY nama");
 
@@ -13,6 +15,7 @@ if ($daftarVendor) {
         $jenisVendor[$jenis] = $daftarVendor[$i % count($daftarVendor)];
     }
 }
+// Simpan info vendor untuk tiap barang.
 $vendorBarang = [];
 foreach ($barang as $b) {
     $v = $jenisVendor[$b['jenis']] ?? ($daftarVendor[0] ?? null);
@@ -27,11 +30,14 @@ foreach ($barang as $b) {
 $errors = [];
 $baris = $_POST['baris'] ?? [];
 
+// Proses simpan pengadaan.
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Wajib ada vendor aktif.
     if (!$daftarVendor) {
         $errors[] = 'Belum ada vendor aktif. Aktifkan vendor di menu Data Vendor.';
     }
 
+    // Validasi tiap baris barang.
     $items = [];
     foreach ($baris as $row) {
         $idbarang = (int) ($row['idbarang'] ?? 0);
@@ -54,6 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             continue;
         }
 
+        // Vendor harus ketemu buat barang ini.
         $v = $vendorBarang[$idbarang] ?? null;
         if (!$v) {
             $errors[] = 'Vendor otomatis untuk salah satu barang belum tersedia.';
@@ -68,10 +75,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ];
     }
 
+    // Minimal satu barang.
     if (!$items) {
         $errors[] = 'Minimal satu barang harus diisi.';
     }
 
+    // Kalau valid, simpan ke database.
     if (!$errors) {
         try {
             $pdo->beginTransaction();
@@ -86,6 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $daftarId = [];
             $daftarNama = [];
             $daftarItems = [];
+            // Buat header pengadaan per vendor.
             foreach ($grup as $idvendor => $rows) {
                 $subtotal = 0;
                 $hitung = [];
@@ -104,6 +114,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $ppn = (int) db_val("SELECT fn_calculate_ppn(?)", [$subtotal]);
                 $total = $subtotal + $ppn;
 
+                // Simpan header pengadaan dengan status P (menunggu).
                 db_exec(
                     "INSERT INTO pengadaan
                         (user_iduser, status, vendor_idvendor, subtotal_nilai, ppn, total_nilai)
@@ -113,6 +124,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $idPengadaan = db_insert_id();
                 $daftarId[] = $idPengadaan;
 
+                // Cari nama vendor buat pesan.
                 $namaVendor = 'Vendor';
                 foreach ($daftarVendor as $v) {
                     if ((int) $v['idvendor'] === (int) $idvendor) {
@@ -134,6 +146,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $pdo->commit();
 
+            // Susun pesan sukses.
             $pesan = (count($daftarId) > 1)
                 ? 'Barang dari vendor berbeda dibuatkan pengadaan terpisah: ' . implode(', ', $daftarNama) . '. Menunggu konfirmasi.'
                 : 'Pengadaan #' . $daftarId[0] . ' berhasil dibuat dan menunggu konfirmasi.';
@@ -149,6 +162,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
+// Tampilkan form.
 $JUDUL = 'Buat Pengadaan';
 $AKTIF = 'pengadaan.php';
 require __DIR__ . '/inc/header.php';
@@ -241,12 +255,14 @@ require __DIR__ . '/inc/header.php';
 </div>
 
 <script>
+// JS form pengadaan: isi harga, tambah/hapus baris, dan hitung total.
 let nomorBaris = 1;
 
 function rupiah(n) {
     return 'Rp ' + Number(n || 0).toLocaleString('id-ID');
 }
 
+// Isi harga & vendor otomatis waktu barang dipilih.
 function isiHarga(select) {
     const baris = select.closest('.baris-item');
     const opsi = select.options[select.selectedIndex];
@@ -257,6 +273,7 @@ function isiHarga(select) {
     hitungTotal();
 }
 
+// Tambah baris barang baru.
 function tambahBaris() {
     const tbody = document.querySelector('#tabelItem tbody');
     const awal = tbody.querySelector('.baris-item');
@@ -276,6 +293,7 @@ function tambahBaris() {
     hitungTotal();
 }
 
+// Hapus baris, minimal sisakan satu baris.
 function hapusBaris(btn) {
     const semua = document.querySelectorAll('.baris-item');
     if (semua.length <= 1) {
@@ -285,6 +303,7 @@ function hapusBaris(btn) {
     hitungTotal();
 }
 
+// Hitung subtotal, PPN 11%, dan total semua baris.
 function hitungTotal() {
     let subtotal = 0;
 

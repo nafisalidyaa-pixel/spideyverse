@@ -1,9 +1,11 @@
 <?php
+// Detail penerimaan: tampilkan header, detail barang, dan riwayat retur.
 require_once __DIR__ . '/inc/auth.php';
 cek_role([1, 2]);
 
 $id = (int) ($_GET['id'] ?? 0);
 
+// Ambil header penerimaan + relasi pengadaan/vendor/user.
 $header = db_one(
     "SELECT pr.idpenerimaan, pr.created_at, pr.status, pr.idpengadaan,
             v.nama_vendor, u.username
@@ -15,12 +17,14 @@ $header = db_one(
     [$id]
 );
 
+// Kalau data tidak ada, balik ke daftar.
 if (!$header) {
     flash('error', 'Penerimaan tidak ditemukan.');
     header('Location: penerimaan.php');
     exit;
 }
 
+// Ambil detail barang + hitung jumlah yang sudah diretur.
 $detail = db_all(
     "SELECT dpe.iddetail_penerimaan, dpe.jumlah_terima, dpe.harga_satuan_terima,
             dpe.sub_total_terima, dpe.barang_idbarang, b.nama, b.jenis,
@@ -33,6 +37,7 @@ $detail = db_all(
     [$id]
 );
 
+// Ambil riwayat retur untuk penerimaan ini.
 $retur = db_all(
     "SELECT r.idretur, r.created_at, dr.jumlah, dr.alasan, b.nama, u.username
      FROM retur r
@@ -45,8 +50,10 @@ $retur = db_all(
     [$id]
 );
 
+// Total nilai penerimaan.
 $totalNilai = array_sum(array_map(fn($d) => (int) $d['sub_total_terima'], $detail));
 
+// Tampilkan halaman.
 $JUDUL = 'Detail Penerimaan #' . $id;
 $AKTIF = 'penerimaan.php';
 require __DIR__ . '/inc/header.php';
@@ -95,11 +102,13 @@ require __DIR__ . '/inc/header.php';
         </table>
     </div>
 
+    <?php // Total nilai penerimaan. ?>
     <div class="panel-putih panel mt">
         <div class="teks-kanan total-besar">Total Nilai: <?= rupiah($totalNilai) ?></div>
     </div>
 </div>
 
+<?php // Riwayat retur dari penerimaan ini. ?>
 <div class="panel">
     <h2>Riwayat Retur Penerimaan Ini</h2>
     <div class="tabel-wrap">

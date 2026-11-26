@@ -1,7 +1,9 @@
 <?php
+// Halaman daftar pengadaan: ambil header + hitung item, kuantitas, dan penerimaan.
 require_once __DIR__ . '/inc/auth.php';
 cek_role([1, 2]);
 
+// Query daftar pengadaan + relasi vendor/user + subquery jumlah item & penerimaan.
 $daftar = db_all(
     "SELECT p.idpengadaan, p.timestamp, p.status, p.subtotal_nilai, p.ppn, p.total_nilai,
             v.nama_vendor, u.username,
@@ -15,6 +17,7 @@ $daftar = db_all(
      ORDER BY p.idpengadaan DESC"
 );
 
+// Tampilkan halaman.
 $JUDUL = 'Pengadaan';
 $AKTIF = 'pengadaan.php';
 require __DIR__ . '/inc/header.php';
@@ -57,6 +60,7 @@ require __DIR__ . '/inc/header.php';
                                 <a class="btn btn-kecil btn-outline"
                                    href="pengadaan_detail.php?id=<?= (int) $p['idpengadaan'] ?>">Detail</a>
 
+                                <?php // Status P: bisa disetujui, dan admin bisa hapus. ?>
                                 <?php if ($p['status'] === 'P'): ?>
                                     <form method="post" action="pengadaan_setujui.php">
                                         <input type="hidden" name="id" value="<?= (int) $p['idpengadaan'] ?>">
@@ -70,6 +74,7 @@ require __DIR__ . '/inc/header.php';
                                         </form>
                                     <?php endif; ?>
                                 <?php elseif ($p['status'] === 'A'): ?>
+                                    <?php // Status A: sudah disetujui, lanjut terima barang. ?>
                                     <a class="btn btn-kecil"
                                        href="penerimaan_tambah.php?pengadaan=<?= (int) $p['idpengadaan'] ?>">Terima</a>
                                 <?php endif; ?>

@@ -1,7 +1,9 @@
 <?php
+// Halaman daftar penerimaan: ambil header + hitung item, kuantitas, dan nilai.
 require_once __DIR__ . '/inc/auth.php';
 cek_role([1, 2]);
 
+// Query penerimaan + relasi pengadaan/vendor/user + subquery detail.
 $daftar = db_all(
     "SELECT pr.idpenerimaan, pr.created_at, pr.status, pr.idpengadaan,
             v.nama_vendor, u.username,
@@ -17,6 +19,7 @@ $daftar = db_all(
      ORDER BY pr.idpenerimaan DESC"
 );
 
+// Tampilkan halaman.
 $JUDUL = 'Penerimaan Barang';
 $AKTIF = 'penerimaan.php';
 require __DIR__ . '/inc/header.php';

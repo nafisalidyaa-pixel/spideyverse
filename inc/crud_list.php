@@ -1,19 +1,20 @@
 <?php
-/**
- * Halaman daftar (read) untuk master data.
- * Dipakai oleh: barang.php, satuan.php, vendor.php, role.php, user.php, margin.php
- */
+// Halaman daftar (read) untuk semua master data.
+// Dipakai oleh: barang.php, satuan.php, vendor.php, role.php, user.php, margin.php
 
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/crud.php';
 
+// Ambil config master dan cek role yang boleh lihat.
 $cfg = master_config($master);
 cek_role($cfg['roles']);
 $boleh_edit = in_array(id_role(), $cfg['edit_roles'], true);
 
+// Siapkan filter pencarian dan jenis.
 $where = [];
 $params = [];
 
+// Filter kata kunci kalau config menyediakan kolom cari.
 $cari = trim($_GET['cari'] ?? '');
 if ($cari !== '' && !empty($cfg['cari'])) {
     $bagian = [];
@@ -24,21 +25,24 @@ if ($cari !== '' && !empty($cfg['cari'])) {
     $where[] = '(' . implode(' OR ', $bagian) . ')';
 }
 
+// Filter jenis barang khusus halaman barang.
 $jenis = trim($_GET['jenis'] ?? '');
 if ($jenis !== '' && !empty($cfg['filter_jenis'])) {
     $where[] = 'b.jenis = ?';
     $params[] = $jenis;
 }
 
+// Gabungkan query list + filter + urutan.
 $sql = $cfg['list_sql'];
 if ($where) {
     $sql .= ' WHERE ' . implode(' AND ', $where);
 }
 $sql .= $cfg['order_sql'];
 
-// Mengeksekusi list_sql master — sebagian besar halaman master memanggil view (v_barang, v_satuan, v_vendor, v_role, v_user, v_margin_penjualan)
+// Eksekusi list_sql master — sebagian besar halaman master memanggil view (v_barang, v_satuan, v_vendor, v_role, v_user, v_margin_penjualan)
 $data = db_all($sql, $params);
 
+// Tampilkan halaman daftar.
 $JUDUL = $cfg['judul'];
 $AKTIF = $cfg['halaman'];
 $dasar = basename($cfg['halaman'], '.php');

@@ -1,4 +1,5 @@
-﻿DROP PROCEDURE IF EXISTS `sp_tambah_penjualan`;
+﻿-- 04_sp.sql ⤳ 3 stored procedure: penjualan 1 barang, penjualan keranjang (JSON), dan simpan pengadaan.
+DROP PROCEDURE IF EXISTS `sp_tambah_penjualan`;
 DELIMITER ;;
 
 CREATE PROCEDURE `sp_tambah_penjualan`(

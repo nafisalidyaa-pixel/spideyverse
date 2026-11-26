@@ -1,7 +1,9 @@
 <?php
+// laporan_penjualan.php ⤳ laporan penjualan per periode + rekap penjualan per barang.
 require_once __DIR__ . '/inc/auth.php';
 cek_role([1, 3]);
 
+// Ambil rentang tanggal dari filter; kalau nggak valid pakai default bulan ini.
 $dari = $_GET['dari'] ?? date('Y-m-01');
 $sampai = $_GET['sampai'] ?? date('Y-m-d');
 if (!tanggal_valid($dari)) {
@@ -11,6 +13,7 @@ if (!tanggal_valid($sampai)) {
     $sampai = date('Y-m-d');
 }
 
+// Kalau yang login kasir (role 3), tambah filter cuma transaksi miliknya.
 $params = [$dari, $sampai];
 $filterKasir = '';
 if (id_role() === 3) {
@@ -18,6 +21,7 @@ if (id_role() === 3) {
     $params[] = id_user();
 }
 
+// Ambil daftar penjualan + kasir + margin + jumlah item per transaksi.
 $penjualan = db_all(
     "SELECT p.idpenjualan, p.created_at, p.subtotal_nilai, p.ppn, p.total_nilai,
             u.username, m.persen,
@@ -31,6 +35,7 @@ $penjualan = db_all(
     $params
 );
 
+// Filter yang sama dipakai buat rekap per barang.
 $rekapParams = [$dari, $sampai];
 $filterKasirRekap = '';
 if (id_role() === 3) {
@@ -38,6 +43,7 @@ if (id_role() === 3) {
     $rekapParams[] = id_user();
 }
 
+// Rekap penjualan per barang: total kuantitas + total pendapatan.
 $rekap = db_all(
     "SELECT b.idbarang, b.nama, b.jenis,
             SUM(dp.jumlah) AS kuantitas,
@@ -51,11 +57,13 @@ $rekap = db_all(
     $rekapParams
 );
 
+// Hitung ringkasan: jumlah transaksi, item terjual, total PPN, dan total pendapatan.
 $totalTransaksi = count($penjualan);
 $totalItem = array_sum(array_map(fn($r) => (int) $r['item'], $penjualan));
 $totalPendapatan = array_sum(array_map(fn($r) => (int) $r['total_nilai'], $penjualan));
 $totalPpn = array_sum(array_map(fn($r) => (int) $r['ppn'], $penjualan));
 
+// Tampilkan halaman laporan penjualan.
 $JUDUL = 'Laporan Penjualan';
 $AKTIF = 'laporan_penjualan.php';
 require __DIR__ . '/inc/header.php';

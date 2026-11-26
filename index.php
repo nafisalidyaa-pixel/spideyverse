@@ -1,9 +1,11 @@
 <?php
+// Dashboard: tampilkan ringkasan sesuai role yang lagi login.
 require_once __DIR__ . '/inc/auth.php';
 cek_login();
 
 $role = id_role();
 
+// Statistik umum: barang aktif, total stok, stok rendah, penjualan hari ini.
 $totalBarang  = (int) db_val("SELECT COUNT(*) FROM barang WHERE status = 1");
 $totalStok    = (int) db_val("SELECT COALESCE(SUM(masuk - keluar), 0) FROM kartu_stok");
 $jumlahKritis = (int) db_val(
@@ -17,6 +19,7 @@ $jumlahKritis = (int) db_val(
      ) AS kritis"
 );
 
+// Daftar barang dengan stok rendah (< 10).
 $stokKritis = db_all(
     "SELECT b.idbarang, b.jenis, b.nama, s.nama_satuan, b.harga,
             COALESCE(SUM(ks.masuk - ks.keluar), 0) AS stok
@@ -30,6 +33,7 @@ $stokKritis = db_all(
      LIMIT 8"
 );
 
+// Penjualan hari ini: jumlah transaksi + pendapatan.
 $jualHariIni = db_one(
     "SELECT COUNT(*) AS jumlah, COALESCE(SUM(total_nilai), 0) AS pendapatan
      FROM penjualan
@@ -42,7 +46,8 @@ require __DIR__ . '/inc/header.php';
 ?>
 
 <?php if ($role === 1): ?>
-    <!-- ================= ADMINISTRATOR ================= -->
+    <!-- Administrator -->
+    <?php // Kartu statistik administrator. ?>
     <div class="grid mb">
         <div class="kartu">
             <div class="ket">Barang Aktif</div>
@@ -66,6 +71,7 @@ require __DIR__ . '/inc/header.php';
         </div>
     </div>
 
+    <?php // Tombol aksi cepat administrator. ?>
     <div class="panel">
         <div class="ringkas">
             <a class="btn btn-glow" href="barang_tambah.php">+ Barang</a>
@@ -85,8 +91,9 @@ require __DIR__ . '/inc/header.php';
     </div>
 
 <?php elseif ($role === 2): ?>
-    <!-- ================= STAFF GUDANG ================= -->
+    <!-- Staff Gudang -->
     <?php
+    // Statistik khusus staff gudang.
     $pengadaanMenunggu = (int) db_val("SELECT COUNT(*) FROM pengadaan WHERE status = 'P'");
     $terimaHariIni  = (int) db_val("SELECT COUNT(*) FROM penerimaan WHERE DATE(created_at) = CURDATE()");
     $returHariIni   = (int) db_val("SELECT COUNT(*) FROM retur WHERE DATE(created_at) = CURDATE()");
@@ -114,6 +121,7 @@ require __DIR__ . '/inc/header.php';
         </div>
     </div>
 
+    <?php // Tombol aksi cepat staff gudang. ?>
     <div class="panel">
         <div class="ringkas">
             <a class="btn btn-glow" href="pengadaan_tambah.php">+ Pengadaan</a>
@@ -124,6 +132,7 @@ require __DIR__ . '/inc/header.php';
     </div>
 
     <?php
+    // Daftar pengadaan yang sudah disetujui tapi belum diterima penuh.
     $menunggu = db_all(
         "SELECT p.idpengadaan, v.nama_vendor, p.timestamp, p.total_nilai,
                 (SELECT COALESCE(SUM(dp.jumlah), 0) FROM detail_pengadaan dp
@@ -167,8 +176,9 @@ require __DIR__ . '/inc/header.php';
     </div>
 
 <?php else: ?>
-    <!-- ================= KASIR ================= -->
+    <!-- Kasir -->
     <?php
+    // Total item yang terjual hari ini.
     $itemHariIni = (int) db_val(
         "SELECT COALESCE(SUM(dp.jumlah), 0)
          FROM detail_penjualan dp
@@ -176,6 +186,7 @@ require __DIR__ . '/inc/header.php';
          WHERE DATE(p.created_at) = CURDATE()"
     );
     ?>
+    <?php // Kartu statistik kasir. ?>
     <div class="grid mb">
         <div class="kartu">
             <div class="ket">Transaksi Hari Ini</div>
@@ -199,6 +210,7 @@ require __DIR__ . '/inc/header.php';
         </div>
     </div>
 
+    <?php // Tombol aksi cepat kasir. ?>
     <div class="panel">
         <div class="ringkas">
             <a class="btn btn-glow" href="penjualan_tambah.php">+ Transaksi Penjualan</a>
@@ -208,6 +220,7 @@ require __DIR__ . '/inc/header.php';
     </div>
 
     <?php
+    // Riwayat 5 penjualan terakhir milik kasir yang login.
     $riwayat = db_all(
         "SELECT p.idpenjualan, p.created_at, p.total_nilai, u.username,
                 (SELECT COALESCE(SUM(dp.jumlah), 0) FROM detail_penjualan dp
@@ -246,6 +259,7 @@ require __DIR__ . '/inc/header.php';
     </div>
 <?php endif; ?>
 
+<?php // Daftar stok rendah yang tampil di semua role. ?>
 <div class="panel">
     <h2>Stok Rendah</h2>
     <div class="tabel-wrap">

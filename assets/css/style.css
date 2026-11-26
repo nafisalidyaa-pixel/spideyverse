@@ -1,8 +1,4 @@
-/* =========================================================
-   SPIDEYVERSE - Enterprise Pink (Kantoran / Premium)
-   Sidebar wine gelap, area kerja blush lembut,
-   panel putih bersih, aksen rose elegan.
-   ========================================================= */
+/* style.css ⤳ tampilan SpideyVerse: tema pink enterprise, sidebar, panel, tabel, form, tombol, dan struk. */
 
 :root {
     --pink-1: #e94f8a;
@@ -143,9 +139,7 @@ small {
     opacity: 0.85;
 }
 
-/* =========================
-   LAYOUT
-========================= */
+/* Layout utama: sidebar + area kerja. */
 
 .app {
     display: flex;
@@ -466,9 +460,7 @@ small {
     }
 }
 
-/* =========================
-   PANEL & KARTU
-========================= */
+/* Panel putih, kartu ringkasan, dan grid. */
 
 .panel {
     position: relative;
@@ -570,9 +562,7 @@ small {
     opacity: 1;
 }
 
-/* =========================
-   TABEL
-========================= */
+/* Tabel data + wrapper biar bisa digeser. */
 
 .tabel-wrap {
     width: 100%;
@@ -656,9 +646,7 @@ th.angka {
     opacity: 0.85;
 }
 
-/* =========================
-   FORM
-========================= */
+/* Form: label, input, select, dan grid form. */
 
 label {
     display: block;
@@ -727,9 +715,7 @@ input[type="date"] {
     margin-top: 16px;
 }
 
-/* =========================
-   TOMBOL & BADGE
-========================= */
+/* Tombol (efek 3D/ripple) dan badge status. */
 
 .btn {
     position: relative;
@@ -976,9 +962,7 @@ input[type="date"] {
     color: var(--putih);
 }
 
-/* =========================
-   ALERT / FLASH
-========================= */
+/* Alert biasa dan popup flash. */
 
 .alert {
     padding: 13px 15px;
@@ -1007,9 +991,7 @@ input[type="date"] {
     background: linear-gradient(180deg, #fcfeff, #eff5fd);
 }
 
-/* =========================
-   LOGIN
-========================= */
+/* Halaman login. */
 
 .login-wrap {
     min-height: 100vh;
@@ -1106,9 +1088,7 @@ input[type="date"] {
     }
 }
 
-/* =========================
-   NOTIFIKASI POPUP (DIALOG)
-========================= */
+/* Popup notifikasi (dialog) + animasinya. */
 
 body.notif-aktif {
     overflow: hidden;
@@ -1419,9 +1399,7 @@ body.notif-aktif {
     }
 }
 
-/* =========================
-   LAIN-LAIN
-========================= */
+/* Utility dan elemen lain-lain. */
 
 .aksi {
     display: flex;
@@ -1514,9 +1492,7 @@ h3 {
     color: var(--tinta);
 }
 
-/* =========================
-   BUKTI TRANSAKSI
-========================= */
+/* Tampilan bukti transaksi / struk. */
 
 .struk-wrap {
     width: 100%;

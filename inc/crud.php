@@ -1,11 +1,13 @@
 <?php
+// Konfigurasi semua master data: barang, satuan, vendor, role, user, margin.
 
-
+// Ambil config master berdasarkan key-nya.
 function master_config(string $key): array
 {
     $jenis = jenis_barang();
 
     $config = [
+        // Config master barang (daftar baca view v_barang).
         'barang' => [
             'judul'    => 'Data Barang',
             'halaman'  => 'barang.php',
@@ -43,6 +45,7 @@ function master_config(string $key): array
             ],
         ],
 
+        // Config master satuan (daftar baca view v_satuan).
         'satuan' => [
             'judul'    => 'Data Satuan',
             'halaman'  => 'satuan.php',
@@ -68,6 +71,7 @@ function master_config(string $key): array
             ],
         ],
 
+        // Config master vendor (daftar baca view v_vendor).
         'vendor' => [
             'judul'    => 'Data Vendor',
             'halaman'  => 'vendor.php',
@@ -98,6 +102,7 @@ function master_config(string $key): array
             ],
         ],
 
+        // Config master role (daftar baca view v_role).
         'role' => [
             'judul'    => 'Data Role',
             'halaman'  => 'role.php',
@@ -120,6 +125,7 @@ function master_config(string $key): array
             ],
         ],
 
+        // Config master user (daftar baca view v_user).
         'user' => [
             'judul'    => 'Data User',
             'halaman'  => 'user.php',
@@ -148,6 +154,7 @@ function master_config(string $key): array
                  'options_sql' => "SELECT idrole AS nilai, nama_role AS label FROM `role` ORDER BY idrole",
                  'required' => true],
             ],
+            // Validasi tambahan: username tidak boleh dobel.
             'validasi' => function (array $data, int $id): ?string {
                 $ada = db_val(
                     "SELECT COUNT(*) FROM `user` WHERE username = ? AND iduser <> ?",
@@ -157,6 +164,7 @@ function master_config(string $key): array
             },
         ],
 
+        // Config master margin penjualan (daftar baca view v_margin_penjualan).
         'margin' => [
             'judul'    => 'Margin Penjualan',
             'halaman'  => 'margin.php',
@@ -193,6 +201,7 @@ function master_config(string $key): array
     return $config[$key];
 }
 
+// Ambil daftar opsi buat field select.
 function opsi_field(array $field): array
 {
     if (!empty($field['options'])) {
@@ -209,6 +218,7 @@ function opsi_field(array $field): array
     return [];
 }
 
+// Format nilai kolom buat ditampilin di tabel.
 function tampil_nilai(string $format, $nilai)
 {
     switch ($format) {

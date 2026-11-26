@@ -1,4 +1,6 @@
-﻿
+﻿-- 02_trigger.sql ⤳ 4 trigger otomatis yang ngatur stok:
+-- penerimaan nambah stok (M), penjualan validasi + kurangi stok (K), retur kurangi stok (R).
+
 DROP TRIGGER IF EXISTS `trg_penerimaan_stok`;
 -- kerjanya : barang masuk-hitung stok lama-tambah stok baru, JADI INI AFTER YAA
 DELIMITER ;;
@@ -143,7 +145,7 @@ BEGIN
         stock,
         idtransaksi,
         idbarang
-    )\
+    )
     -- isi urut 
     VALUES
     (
