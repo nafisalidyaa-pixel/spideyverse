@@ -103,6 +103,7 @@ function master_config(string $key): array
         ],
 
         // Config master role (daftar baca view v_role).
+        // Role dikelola lewat STATUS Aktif/Nonaktif, bukan Edit/Hapus.
         'role' => [
             'judul'    => 'Data Role',
             'halaman'  => 'role.php',
@@ -110,14 +111,14 @@ function master_config(string $key): array
             'pk'       => 'idrole',
             'roles'    => [1],
             'edit_roles' => [1],
+            'aksi'     => 'status',
             // Membaca dari view: v_role (definisi di database/05_view.sql)
-            'list_sql' => "SELECT r.idrole, r.nama_role, r.jumlah_user
+            'list_sql' => "SELECT r.idrole, r.nama_role, r.status, r.jumlah_user
                            FROM v_role r",
             'order_sql' => " ORDER BY r.idrole",
             'kolom'    => [
-                ['label' => 'ID', 'key' => 'idrole'],
                 ['label' => 'Nama Role', 'key' => 'nama_role'],
-                ['label' => 'Jumlah User', 'key' => 'jumlah_user', 'class' => 'angka'],
+                ['label' => 'Status', 'key' => 'status', 'format' => 'status_aktif'],
             ],
             'fields'   => [
                 ['name' => 'nama_role', 'label' => 'Nama Role', 'type' => 'text',

@@ -211,14 +211,16 @@ CREATE TABLE `retur` (
 INSERT INTO `retur` VALUES (1,'2026-11-04 16:47:48',1,2),(4,'2026-11-05 04:19:39',1,2),(5,'2026-11-05 06:05:38',3,2);
 
 -- Tabel role: daftar hak akses (Administrator, Staff Gudang, Kasir).
+-- Status: 1 = Aktif, 0 = Nonaktif (bisa diubah lewat halaman Data Role).
 DROP TABLE IF EXISTS `role`;
 CREATE TABLE `role` (
   `idrole` int NOT NULL AUTO_INCREMENT,
   `nama_role` varchar(100) DEFAULT NULL,
+  `status` tinyint DEFAULT 1,
   PRIMARY KEY (`idrole`)
 ) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
-INSERT INTO `role` VALUES (1,'Administrator'),(2,'Staff Gudang'),(3,'Kasir');
+INSERT INTO `role` VALUES (1,'Administrator',1),(2,'Staff Gudang',1),(3,'Kasir',1);
 
 -- Tabel satuan: master satuan barang (PCS, BOX, SET).
 DROP TABLE IF EXISTS `satuan`;

@@ -53,9 +53,9 @@ require __DIR__ . '/header.php';
     <div>
         <div class="sub">Menampilkan <b><?= count($data) ?></b> data <?= e($cfg['judul']) ?>.</div>
     </div>
-    <?php if ($boleh_edit): ?>
+    <?php if ($boleh_edit && ($cfg['aksi'] ?? '') !== 'status'): ?>
         <a class="btn" href="<?= e($dasar) ?>_tambah.php">+ Tambah Data</a>
-    <?php else: ?>
+    <?php elseif (!$boleh_edit): ?>
         <span class="badge badge-biru">Hanya Lihat</span>
     <?php endif; ?>
 </div>
@@ -121,7 +121,16 @@ require __DIR__ . '/header.php';
                                 <?= tampil_nilai($kolom['format'] ?? 'text', $row[$kolom['key']] ?? null) ?>
                             </td>
                         <?php endforeach; ?>
-                        <?php if ($boleh_edit): ?>
+                        <?php if ($boleh_edit && ($cfg['aksi'] ?? '') === 'status'): ?>
+                            <td>
+                                <form method="post" action="<?= e($dasar) ?>_status.php">
+                                    <input type="hidden" name="id" value="<?= (int) $row[$cfg['pk']] ?>">
+                                    <button type="submit" class="btn btn-kecil <?= (int) $row['status'] === 1 ? 'btn-merah' : 'btn-outline' ?>">
+                                        <?= (int) $row['status'] === 1 ? 'Nonaktifkan' : 'Aktifkan' ?>
+                                    </button>
+                                </form>
+                            </td>
+                        <?php elseif ($boleh_edit): ?>
                             <td>
                                 <div class="aksi">
                                     <a class="btn btn-kecil btn-outline"
