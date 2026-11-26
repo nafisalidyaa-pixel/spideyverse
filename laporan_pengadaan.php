@@ -1,4 +1,4 @@
-<?php
+ <?php
 require_once __DIR__ . '/inc/auth.php';
 cek_role([1, 2]);
 

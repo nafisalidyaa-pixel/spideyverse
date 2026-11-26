@@ -17,9 +17,9 @@ if ($id <= 0) {
 
 try {
     // Konfirmasi pengadaan: data detail barang yang ditampung di session
-    // (dalam bentuk JSON) dimasukkan ke tabel detail_pengadaan melalui
-    // stored procedure sp_simpan_pengadaan, lalu status pengadaan diubah.
-    $dataPending = json_decode($_SESSION['pending_pengadaan'][$id] ?? '', true);
+    // baru dimasukkan ke tabel detail_pengadaan melalui stored procedure
+    // sp_simpan_pengadaan, lalu status pengadaan diubah.
+    $dataPending = $_SESSION['pending_pengadaan'][$id] ?? [];
     if (is_array($dataPending)) {
         foreach ($dataPending as $item) {
             // Memanggil stored procedure: sp_simpan_pengadaan (definisi di database/04_sp.sql)
