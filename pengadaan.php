@@ -73,10 +73,12 @@ require __DIR__ . '/inc/header.php';
                                             <button type="submit" class="btn btn-kecil btn-merah">Hapus</button>
                                         </form>
                                     <?php endif; ?>
-                                <?php elseif ($p['status'] === 'A'): ?>
-                                    <?php // Status A: sudah disetujui, lanjut terima barang. ?>
+                                <?php elseif ($p['status'] === 'A' && !pengadaan_selesai_diterima((int) $p['idpengadaan'])): ?>
+                                    <?php // Status A: sudah disetujui & masih ada sisa, lanjut terima barang. ?>
                                     <a class="btn btn-kecil"
                                        href="penerimaan_tambah.php?pengadaan=<?= (int) $p['idpengadaan'] ?>">Terima</a>
+                                <?php elseif ($p['status'] === 'A'): ?>
+                                    <span class="badge badge-hijau">Selesai Diterima</span>
                                 <?php endif; ?>
                             </div>
                         </td>

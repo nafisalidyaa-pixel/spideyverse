@@ -299,3 +299,22 @@ function ambil_query_lalu(): void
         unset($_SESSION['query_lalu']);
     }
 }
+
+// Cek apakah semua barang dalam pengadaan sudah diterima.
+// Dipakai untuk menyembunyikan tombol "Terima" kalau pengadaan sudah selesai.
+function pengadaan_selesai_diterima(int $idpengadaan): bool
+{
+    $row = db_one(
+        "SELECT
+            COALESCE((SELECT SUM(dp.jumlah) FROM detail_pengadaan dp
+                      WHERE dp.idpengadaan = ?), 0) AS total_pesan,
+            COALESCE((SELECT SUM(dpe.jumlah_terima) FROM detail_penerimaan dpe
+                      JOIN penerimaan pr ON pr.idpenerimaan = dpe.idpenerimaan
+                      WHERE pr.idpengadaan = ?), 0) AS total_terima",
+        [$idpengadaan, $idpengadaan]
+    );
+    if (!$row) {
+        return false;
+    }
+    return (int) $row['total_pesan'] > 0 && (int) $row['total_terima'] >= (int) $row['total_pesan'];
+}

@@ -58,14 +58,12 @@ SELECT
     (SELECT COUNT(*) FROM `pengadaan` p WHERE p.`vendor_idvendor` = v.`idvendor`) AS `jumlah_pengadaan`
 FROM `vendor` v;
 
--- v_role: role + status aktif + jumlah user yang pakai role itu.
+-- v_role: role + jumlah user yang pakai role itu (dipakai → Aktif).
 DROP VIEW IF EXISTS `v_role`;
 CREATE VIEW `v_role` AS
 SELECT
     r.`idrole`,
     r.`nama_role`,
-    r.`status`,
-    CASE WHEN r.`status` = 1 THEN 'Aktif' ELSE 'Nonaktif' END AS `status_role`,
     (SELECT COUNT(*) FROM `user` u WHERE u.`idrole` = r.`idrole`) AS `jumlah_user`
 FROM `role` r;
 

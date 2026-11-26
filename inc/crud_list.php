@@ -9,6 +9,8 @@ require_once __DIR__ . '/crud.php';
 $cfg = master_config($master);
 cek_role($cfg['roles']);
 $boleh_edit = in_array(id_role(), $cfg['edit_roles'], true);
+// Role punya aksi "Aktifkan" (pindah role), bukan Edit/Hapus/Tambah.
+$ada_aksi = $boleh_edit && ($cfg['aksi'] ?? '') !== 'none';
 
 // Siapkan filter pencarian dan jenis.
 $where = [];
@@ -53,7 +55,7 @@ require __DIR__ . '/header.php';
     <div>
         <div class="sub">Menampilkan <b><?= count($data) ?></b> data <?= e($cfg['judul']) ?>.</div>
     </div>
-    <?php if ($boleh_edit && ($cfg['aksi'] ?? '') !== 'status'): ?>
+    <?php if ($ada_aksi && ($cfg['aksi'] ?? '') !== 'aktifkan'): ?>
         <a class="btn" href="<?= e($dasar) ?>_tambah.php">+ Tambah Data</a>
     <?php elseif (!$boleh_edit): ?>
         <span class="badge badge-biru">Hanya Lihat</span>
@@ -100,7 +102,7 @@ require __DIR__ . '/header.php';
                     <?php foreach ($cfg['kolom'] as $kolom): ?>
                         <th class="<?= e($kolom['class'] ?? '') ?>"><?= e($kolom['label']) ?></th>
                     <?php endforeach; ?>
-                    <?php if ($boleh_edit): ?>
+                    <?php if ($ada_aksi): ?>
                         <th>Aksi</th>
                     <?php endif; ?>
                 </tr>
@@ -108,7 +110,7 @@ require __DIR__ . '/header.php';
             <tbody>
                 <?php if (!$data): ?>
                     <tr>
-                        <td class="kosong" colspan="<?= count($cfg['kolom']) + ($boleh_edit ? 1 : 0) ?>">
+                        <td class="kosong" colspan="<?= count($cfg['kolom']) + ($ada_aksi ? 1 : 0) ?>">
                             Belum ada data.
                         </td>
                     </tr>
@@ -121,16 +123,16 @@ require __DIR__ . '/header.php';
                                 <?= tampil_nilai($kolom['format'] ?? 'text', $row[$kolom['key']] ?? null) ?>
                             </td>
                         <?php endforeach; ?>
-                        <?php if ($boleh_edit && ($cfg['aksi'] ?? '') === 'status'): ?>
+                        <?php if ($ada_aksi && ($cfg['aksi'] ?? '') === 'aktifkan'): ?>
                             <td>
-                                <form method="post" action="<?= e($dasar) ?>_status.php">
-                                    <input type="hidden" name="id" value="<?= (int) $row[$cfg['pk']] ?>">
-                                    <button type="submit" class="btn btn-kecil <?= (int) $row['status'] === 1 ? 'btn-merah' : 'btn-outline' ?>">
-                                        <?= (int) $row['status'] === 1 ? 'Nonaktifkan' : 'Aktifkan' ?>
-                                    </button>
-                                </form>
+                                <?php if ((int) $row[$cfg['pk']] === id_role()): ?>
+                                    <span class="badge badge-hijau">Sedang Dipakai</span>
+                                <?php else: ?>
+                                    <a class="btn btn-kecil btn-outline"
+                                       href="logout.php?role=<?= (int) $row[$cfg['pk']] ?>">Aktifkan</a>
+                                <?php endif; ?>
                             </td>
-                        <?php elseif ($boleh_edit): ?>
+                        <?php elseif ($ada_aksi): ?>
                             <td>
                                 <div class="aksi">
                                     <a class="btn btn-kecil btn-outline"

@@ -56,14 +56,16 @@ require __DIR__ . '/inc/header.php';
         </div>
         <div class="aksi">
             <a class="btn btn-outline" href="pengadaan.php">Kembali</a>
-            <?php // Kalau masih menunggu, tampilkan tombol setujui; kalau sudah A, tombol terima. ?>
+            <?php // P: setujui. A + masih ada sisa: buat penerimaan. A + lengkap: selesai. ?>
             <?php if ($header['status'] === 'P'): ?>
                 <form method="post" action="pengadaan_setujui.php">
                     <input type="hidden" name="id" value="<?= (int) $id ?>">
                     <button type="submit" class="btn">Setujui Pengadaan</button>
                 </form>
-            <?php else: ?>
+            <?php elseif (!pengadaan_selesai_diterima($id)): ?>
                 <a class="btn" href="penerimaan_tambah.php?pengadaan=<?= (int) $id ?>">Buat Penerimaan</a>
+            <?php else: ?>
+                <span class="badge badge-hijau">Selesai Diterima</span>
             <?php endif; ?>
         </div>
     </div>

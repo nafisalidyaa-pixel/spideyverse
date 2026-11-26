@@ -103,7 +103,7 @@ function master_config(string $key): array
         ],
 
         // Config master role (daftar baca view v_role).
-        // Role dikelola lewat STATUS Aktif/Nonaktif, bukan Edit/Hapus.
+        // Aktif = role sedang dipakai (jumlah_user > 0), bukan tombol yang diklik.
         'role' => [
             'judul'    => 'Data Role',
             'halaman'  => 'role.php',
@@ -111,14 +111,14 @@ function master_config(string $key): array
             'pk'       => 'idrole',
             'roles'    => [1],
             'edit_roles' => [1],
-            'aksi'     => 'status',
+            'aksi'     => 'aktifkan',
             // Membaca dari view: v_role (definisi di database/05_view.sql)
-            'list_sql' => "SELECT r.idrole, r.nama_role, r.status, r.jumlah_user
+            'list_sql' => "SELECT r.idrole, r.nama_role, r.jumlah_user
                            FROM v_role r",
             'order_sql' => " ORDER BY r.idrole",
             'kolom'    => [
                 ['label' => 'Nama Role', 'key' => 'nama_role'],
-                ['label' => 'Status', 'key' => 'status', 'format' => 'status_aktif'],
+                ['label' => 'Status', 'key' => 'idrole', 'format' => 'status_role_login'],
             ],
             'fields'   => [
                 ['name' => 'nama_role', 'label' => 'Nama Role', 'type' => 'text',
@@ -229,6 +229,11 @@ function tampil_nilai(string $format, $nilai)
             return '<b>' . (int) $nilai . '</b> ' . badge_stok($nilai);
         case 'status_aktif':
             return ((int) $nilai === 1)
+                ? '<span class="badge badge-hijau">Aktif</span>'
+                : '<span class="badge badge-merah">Nonaktif</span>';
+        case 'status_role_login':
+            // Aktif cuma untuk role yang sedang dipakai user yang login.
+            return ((int) $nilai === id_role())
                 ? '<span class="badge badge-hijau">Aktif</span>'
                 : '<span class="badge badge-merah">Nonaktif</span>';
         case 'status_vendor':
