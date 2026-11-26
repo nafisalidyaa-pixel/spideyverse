@@ -31,7 +31,7 @@ $errors = [];
 $baris = $_POST['baris'] ?? [];
 
 // Proses simpan pengadaan.
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     // Wajib ada vendor aktif.
     if (!$daftarVendor) {
         $errors[] = 'Belum ada vendor aktif. Aktifkan vendor di menu Data Vendor.';

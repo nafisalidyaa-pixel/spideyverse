@@ -40,7 +40,7 @@ if ($edit) {
 $errors = [];
 
 // Proses simpan: ambil input, validasi, lalu insert/update.
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     // Ambil semua input sesuai field config.
     foreach ($cfg['fields'] as $field) {
         $data[$field['name']] = trim((string) ($_POST[$field['name']] ?? ''));

@@ -30,9 +30,10 @@ $baris = $_POST['baris'] ?? [];
 
 // Proses penjualan keranjang (banyak barang sekaligus).
 // Validasi stok & hitung harga jual + PPN sebenarnya dilakukan di database lewat SP + trigger.
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Kumpulkan baris yang diisi jadi array item buat dikirim ke SP.
-    $items = [];
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
+    // Kumpulkan baris yang diisi jadi string CSV: "idbarang,jumlah,idbarang,jumlah,..."
+    // Tanpa JSON, tanpa temporary table.
+    $itemsCsv = '';
 
     // Cek tiap baris form: barang harus dipilih dan jumlahnya lebih dari nol.
     foreach ($baris as $row) {
@@ -51,11 +52,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             continue;
         }
 
-        $items[] = ['idbarang' => $idbarang, 'jumlah' => $jumlah];
+        $itemsCsv .= ($itemsCsv === '' ? '' : ',') . $idbarang . ',' . $jumlah;
     }
 
     // Kalau nggak ada satu pun barang valid, gagal.
-    if (!$items) {
+    if ($itemsCsv === '') {
         $errors[] = 'Minimal satu barang harus diisi.';
     }
 
@@ -67,11 +68,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // trg_penjualan_validasi_stok (cek stok) dan trg_penjualan_stok (kurangi stok / kartu_stok jenis K).
             catat_query(
                 'CALL sp_tambah_penjualan_keranjang(?, ?, ?)',
-                [id_user(), $idmarginAuto, json_encode($items)]
+                [id_user(), $idmarginAuto, $itemsCsv]
             );
 
             $stmt = $pdo->prepare('CALL sp_tambah_penjualan_keranjang(?, ?, ?)');
-            $stmt->execute([id_user(), $idmarginAuto, json_encode($items)]);
+            $stmt->execute([id_user(), $idmarginAuto, $itemsCsv]);
             $hasil = $stmt->fetch();
             $stmt->closeCursor();
 
@@ -205,7 +206,7 @@ require __DIR__ . '/inc/header.php';
 <script>
 // Nomor baris berikutnya buat nama input dinamis.
 let nomorBaris = 1;
-const MARGIN_PERSEN = <?= json_encode($persenAuto) ?>;
+const MARGIN_PERSEN = <?= (float) $persenAuto ?>;
 
 // Format angka jadi rupiah.
 function rupiah(n) {

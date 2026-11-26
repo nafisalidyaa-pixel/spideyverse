@@ -10,7 +10,7 @@ $jumlah   = (int) ($_POST['jumlah'] ?? 1);
 $alasan   = trim((string) ($_POST['alasan'] ?? ''));
 
 // Proses cuma jalan kalau form dikirim lewat POST.
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     // Validasi dasar: item wajib dipilih, jumlah > 0, alasan wajib diisi.
     if ($idDetail <= 0) {
         $errors[] = 'Item penerimaan wajib dipilih.';

@@ -1,4 +1,4 @@
-﻿-- 04_sp.sql ⤳ 3 stored procedure: penjualan 1 barang, penjualan keranjang (JSON), dan simpan pengadaan.
+﻿-- 04_sp.sql ⤳ 3 stored procedure: penjualan 1 barang, penjualan keranjang (CSV, tanpa JSON), dan simpan pengadaan.
 DROP PROCEDURE IF EXISTS `sp_tambah_penjualan`;
 DELIMITER ;;
 
@@ -7,6 +7,7 @@ CREATE PROCEDURE `sp_tambah_penjualan`(
     IN p_idmargin INT,
     IN p_idbarang INT,
     IN p_jumlah INT
+)
 -- IN = menerima input berupa ID user, ID margin, ID barang, dan jumlah.
 
 BEGIN
@@ -119,179 +120,105 @@ DELIMITER ;
 -- Mengembalikan tanda akhir query menjadi ;.
 
 DROP PROCEDURE IF EXISTS `sp_tambah_penjualan_keranjang`;
--- Menghapus SP lama.
+-- SP penjualan banyak barang: TANPA JSON dan TANPA temporary table.
+-- Data keranjang dikirim sebagai string CSV: "idbarang,jumlah,idbarang,jumlah,..."
 
 DELIMITER ;;
--- Mengubah tanda akhir query.
-
 CREATE PROCEDURE `sp_tambah_penjualan_keranjang`(
     IN p_iduser INT,
     IN p_idmargin INT,
-    IN p_items JSON
+    IN p_items_csv VARCHAR(255)
 )
--- Membuat SP untuk penjualan banyak barang.
--- IN = input data.
-
 BEGIN
--- Awal SP.
-
     DECLARE v_persen DOUBLE;
+    DECLARE v_idpenjualan INT DEFAULT 0;
+    DECLARE v_sisa VARCHAR(255);
+    DECLARE v_idbarang INT DEFAULT 0;
+    DECLARE v_jumlah INT DEFAULT 0;
+    DECLARE v_harga INT DEFAULT 0;
+    DECLARE v_harga_jual INT DEFAULT 0;
     DECLARE v_subtotal INT DEFAULT 0;
     DECLARE v_ppn INT DEFAULT 0;
     DECLARE v_total INT DEFAULT 0;
-    DECLARE v_idpenjualan INT DEFAULT 0;
-    -- Menyiapkan variabel untuk perhitungan transaksi.
+    DECLARE v_sub INT DEFAULT 0;
+    DECLARE v_ada INT DEFAULT 0;
+    DECLARE v_stok INT DEFAULT 0;
 
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
         ROLLBACK;
         RESIGNAL;
     END;
-    -- Jika error, transaksi dibatalkan.
 
     START TRANSACTION;
-    -- Memulai transaksi.
 
+    -- 1. Validasi margin aktif.
     SELECT persen INTO v_persen
     FROM margin_penjualan
-    WHERE idmargin_penjualan = p_idmargin
-      AND status = 1
+    WHERE idmargin_penjualan = p_idmargin AND status = 1
     LIMIT 1;
-    -- Mengambil margin yang aktif.
 
     IF v_persen IS NULL THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Margin tidak ditemukan atau tidak aktif';
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Margin tidak ditemukan atau tidak aktif';
     END IF;
-    -- Memastikan margin tersedia.
 
-    IF p_items IS NULL OR JSON_LENGTH(p_items) = 0 THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Minimal satu barang harus diisi';
+    -- 2. Validasi keranjang tidak kosong.
+    SET v_sisa = TRIM(COALESCE(p_items_csv, ''));
+    IF v_sisa = '' THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Minimal satu barang harus diisi';
     END IF;
-    -- Memastikan keranjang tidak kosong.
 
-    IF EXISTS (
-        SELECT 1
-        FROM JSON_TABLE(
-            p_items,
-            '$[*]'
-            COLUMNS (
-                idbarang INT PATH '$.idbarang',
-                jumlah   INT PATH '$.jumlah'
-            )
-        ) AS jt
-        LEFT JOIN barang b ON b.idbarang = jt.idbarang AND b.status = 1
-        WHERE b.idbarang IS NULL
-    ) THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Barang tidak ditemukan atau tidak aktif';
-    END IF;
-    -- Memastikan semua barang tersedia dan aktif.
-
-    IF EXISTS (
-        SELECT 1
-        FROM JSON_TABLE(
-            p_items,
-            '$[*]'
-            COLUMNS (
-                idbarang INT PATH '$.idbarang',
-                jumlah   INT PATH '$.jumlah'
-            )
-        ) AS jt
-        WHERE jt.jumlah <= 0
-    ) THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Jumlah harus lebih dari nol';
-    END IF;
-    -- Memastikan jumlah barang valid.
-
-    IF EXISTS (
-        SELECT 1
-        FROM (
-            SELECT jt.idbarang, SUM(jt.jumlah) AS diminta
-            FROM JSON_TABLE(
-                p_items,
-                '$[*]'
-                COLUMNS (
-                    idbarang INT PATH '$.idbarang',
-                    jumlah   INT PATH '$.jumlah'
-                )
-            ) AS jt
-            GROUP BY jt.idbarang
-        ) AS r
-        WHERE COALESCE((
-            SELECT SUM(k.masuk - k.keluar)
-            FROM kartu_stok k
-            WHERE k.idbarang = r.idbarang
-        ), 0) < r.diminta
-    ) THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Stok barang tidak mencukupi';
-    END IF;
-    -- Memastikan stok setiap barang mencukupi.
-
-    SELECT SUM(fn_hitung_subtotal(ROUND(b.harga + b.harga * v_persen / 100), jt.jumlah))
-    INTO v_subtotal
-    FROM JSON_TABLE(
-        p_items,
-        '$[*]'
-        COLUMNS (
-            idbarang INT PATH '$.idbarang',
-            jumlah   INT PATH '$.jumlah'
-        )
-    ) AS jt
-    JOIN barang b ON b.idbarang = jt.idbarang;
-    -- Menghitung subtotal seluruh barang menggunakan Function.
-
-    SET v_ppn = ROUND(v_subtotal * 0.11);
-    -- Menghitung PPN 11%.
-
-    SET v_total = v_subtotal + v_ppn;
-    -- Menghitung total pembayaran.
-
-    INSERT INTO penjualan
-        (subtotal_nilai, ppn, total_nilai, iduser, idmargin_penjualan)
-    VALUES
-        (v_subtotal, v_ppn, v_total, p_iduser, p_idmargin);
-    -- Menyimpan transaksi utama.
-
+    -- 3. Buat header penjualan.
+    INSERT INTO penjualan (subtotal_nilai, ppn, total_nilai, iduser, idmargin_penjualan)
+    VALUES (0, 0, 0, p_iduser, p_idmargin);
     SET v_idpenjualan = LAST_INSERT_ID();
-    -- Mengambil ID transaksi terbaru.
 
-    INSERT INTO detail_penjualan
-        (harga_satuan, jumlah, subtotal, penjualan_idpenjualan, idbarang)
-    SELECT ROUND(b.harga + b.harga * v_persen / 100),
-           jt.jumlah,
-           fn_hitung_subtotal(ROUND(b.harga + b.harga * v_persen / 100), jt.jumlah),
-           v_idpenjualan,
-           jt.idbarang
-    FROM JSON_TABLE(
-        p_items,
-        '$[*]'
-        COLUMNS (
-            idbarang INT PATH '$.idbarang',
-            jumlah   INT PATH '$.jumlah'
-        )
-    ) AS jt
-    JOIN barang b ON b.idbarang = jt.idbarang;
-    -- Menyimpan detail barang dan menjalankan Trigger stok.
+    -- 4. Loop pasangan idbarang,jumlah dari string CSV.
+    WHILE v_sisa IS NOT NULL AND v_sisa <> '' DO
+        SET v_idbarang = CAST(SUBSTRING_INDEX(v_sisa, ',', 1) AS UNSIGNED);
+        SET v_sisa = IF(LOCATE(',', v_sisa) > 0, SUBSTRING(v_sisa, LOCATE(',', v_sisa) + 1), '');
+
+        SET v_jumlah = CAST(SUBSTRING_INDEX(v_sisa, ',', 1) AS UNSIGNED);
+        SET v_sisa = IF(LOCATE(',', v_sisa) > 0, SUBSTRING(v_sisa, LOCATE(',', v_sisa) + 1), '');
+
+        IF v_idbarang <= 0 OR v_jumlah <= 0 THEN
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Data barang tidak valid';
+        END IF;
+
+        SELECT COUNT(*) INTO v_ada FROM barang WHERE idbarang = v_idbarang AND status = 1;
+        IF v_ada = 0 THEN
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Barang tidak ditemukan atau tidak aktif';
+        END IF;
+
+        SELECT COALESCE(SUM(masuk - keluar), 0) INTO v_stok
+        FROM kartu_stok WHERE idbarang = v_idbarang;
+        IF v_stok < v_jumlah THEN
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Stok barang tidak mencukupi';
+        END IF;
+
+        SELECT harga INTO v_harga FROM barang WHERE idbarang = v_idbarang;
+        SET v_harga_jual = ROUND(v_harga + (v_harga * v_persen / 100));
+        SET v_sub = fn_hitung_subtotal(v_harga_jual, v_jumlah);
+
+        INSERT INTO detail_penjualan (harga_satuan, jumlah, subtotal, penjualan_idpenjualan, idbarang)
+        VALUES (v_harga_jual, v_jumlah, v_sub, v_idpenjualan, v_idbarang);
+
+        SET v_subtotal = v_subtotal + v_sub;
+    END WHILE;
+
+    -- 5. Hitung ulang header.
+    SET v_ppn = ROUND(v_subtotal * 0.11);
+    SET v_total = v_subtotal + v_ppn;
+    UPDATE penjualan
+    SET subtotal_nilai = v_subtotal, ppn = v_ppn, total_nilai = v_total
+    WHERE idpenjualan = v_idpenjualan;
 
     COMMIT;
-    -- Menyimpan transaksi.
 
-    SELECT
-        v_idpenjualan AS id_penjualan,
-        v_subtotal AS subtotal,
-        v_ppn AS ppn,
-        v_total AS total_pembayaran;
-    -- Menampilkan hasil transaksi.
-
+    SELECT v_idpenjualan AS id_penjualan, v_subtotal AS subtotal,
+           v_ppn AS ppn, v_total AS total_pembayaran;
 END ;;
--- Akhir SP.
-
 DELIMITER ;
--- Mengembalikan tanda akhir query.
 
 DROP PROCEDURE IF EXISTS `sp_simpan_pengadaan`;
 -- Menyimpan pengadaan barang: jika ID pengadaan masih 0, buat header baru.

@@ -60,7 +60,7 @@ BEGIN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Stok barang tidak mencukupi';
     END IF;
-    --pov barangnya melebihi stok, ditolak
+    -- pov barangnya melebihi stok, ditolak
 END ;;
 DELIMITER ;
 

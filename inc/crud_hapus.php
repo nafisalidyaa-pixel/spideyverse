@@ -9,7 +9,7 @@ $cfg = master_config($master);
 cek_role($cfg['edit_roles']);
 
 // Hanya boleh lewat POST.
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
     header('Location: ' . $cfg['halaman']);
     exit;
 }

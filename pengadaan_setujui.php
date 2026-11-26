@@ -4,7 +4,7 @@ require_once __DIR__ . '/inc/auth.php';
 cek_role([1, 2]);
 
 // Hanya boleh lewat POST.
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
     header('Location: pengadaan.php');
     exit;
 }

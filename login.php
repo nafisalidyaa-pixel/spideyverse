@@ -21,7 +21,7 @@ if (!empty($_SESSION['user'])) {
 $error = '';
 
 // Proses login saat form dikirim.
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     $username = trim($_POST['username'] ?? '');
     $password = (string) ($_POST['password'] ?? '');
 

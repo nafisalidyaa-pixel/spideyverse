@@ -7,7 +7,7 @@ $errors = [];
 $idpengadaan = (int) ($_POST['idpengadaan'] ?? $_GET['pengadaan'] ?? 0);
 
 // Proses simpan penerimaan
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     $terima = $_POST['terima'] ?? [];
 
     // Pengadaan wajib valid.
