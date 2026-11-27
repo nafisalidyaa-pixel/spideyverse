@@ -136,6 +136,24 @@ require __DIR__ . '/header.php';
                                     <?php endif; ?>
                                 </div>
                             </td>
+                        <?php elseif ($ada_aksi && ($cfg['aksi'] ?? '') === 'margin_status'): ?>
+                            <td>
+                                <div class="aksi">
+                                    <form method="post" action="<?= e($dasar) ?>_status.php">
+                                        <input type="hidden" name="id" value="<?= (int) $row[$cfg['pk']] ?>">
+                                        <button type="submit" class="btn btn-kecil <?= (int) $row['status'] === 1 ? 'btn-merah' : '' ?>">
+                                            <?= (int) $row['status'] === 1 ? 'Nonaktifkan' : 'Aktifkan' ?>
+                                        </button>
+                                    </form>
+                                    <a class="btn btn-kecil btn-outline"
+                                       href="<?= e($dasar) ?>_edit.php?id=<?= (int) $row[$cfg['pk']] ?>">Edit</a>
+                                    <form method="post" action="<?= e($dasar) ?>_hapus.php"
+                                          onsubmit="return confirm('Hapus data ini?')">
+                                        <input type="hidden" name="id" value="<?= (int) $row[$cfg['pk']] ?>">
+                                        <button type="submit" class="btn btn-kecil btn-merah">Hapus</button>
+                                    </form>
+                                </div>
+                            </td>
                         <?php elseif ($ada_aksi): ?>
                             <td>
                                 <div class="aksi">

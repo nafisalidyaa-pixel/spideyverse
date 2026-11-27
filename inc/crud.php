@@ -173,6 +173,7 @@ function master_config(string $key): array
             'pk'       => 'idmargin_penjualan',
             'roles'    => [1],
             'edit_roles' => [1],
+            'aksi'     => 'margin_status',
             // Membaca dari view: v_margin_penjualan (definisi di database/05_view.sql)
             'list_sql' => "SELECT m.idmargin_penjualan, m.persen, m.status, m.username,
                                   m.jumlah_penjualan AS dipakai, m.created_at, m.updated_at
