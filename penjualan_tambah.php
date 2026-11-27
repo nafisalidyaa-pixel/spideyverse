@@ -29,11 +29,12 @@ $persenAuto   = $marginAuto ? (float) $marginAuto['persen'] : 0;
 $baris = $_POST['baris'] ?? [];
 
 // Proses penjualan keranjang (banyak barang sekaligus).
-// Validasi stok & hitung harga jual + PPN sebenarnya dilakukan di database lewat SP + trigger.
+// Validasi margin, barang, dan stok dilakukan di sini (PHP), database nggak pakai error khusus.
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     // Kumpulkan baris yang diisi jadi string CSV: "idbarang,jumlah,idbarang,jumlah,..."
     // Tanpa JSON, tanpa temporary table.
     $itemsCsv = '';
+    $diminta  = []; // total kuantitas per barang (biar aman kalau barang sama muncul 2x).
 
     // Cek tiap baris form: barang harus dipilih dan jumlahnya lebih dari nol.
     foreach ($baris as $row) {
@@ -53,11 +54,37 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         }
 
         $itemsCsv .= ($itemsCsv === '' ? '' : ',') . $idbarang . ',' . $jumlah;
+        $diminta[$idbarang] = ($diminta[$idbarang] ?? 0) + $jumlah;
     }
 
     // Kalau nggak ada satu pun barang valid, gagal.
     if ($itemsCsv === '') {
         $errors[] = 'Minimal satu barang harus diisi.';
+    }
+
+    // Harus ada margin aktif.
+    if ($idmarginAuto <= 0) {
+        $errors[] = 'Belum ada margin aktif. Aktifkan margin di menu Margin Penjualan.';
+    }
+
+    // Cek barang aktif & stok cukup sebelum panggil SP.
+    if (!$errors) {
+        foreach ($diminta as $idbarang => $jumlahDiminta) {
+            $barangDb = db_one(
+                "SELECT b.status,
+                        COALESCE((SELECT SUM(k.masuk - k.keluar) FROM kartu_stok k
+                                  WHERE k.idbarang = b.idbarang), 0) AS stok,
+                        b.nama
+                 FROM barang b WHERE b.idbarang = ?",
+                [$idbarang]
+            );
+            if (!$barangDb || (int) $barangDb['status'] !== 1) {
+                $errors[] = 'Barang ' . e($barangDb['nama'] ?? ('#' . $idbarang)) . ' tidak aktif atau tidak ditemukan.';
+            } elseif ((int) $barangDb['stok'] < $jumlahDiminta) {
+                $errors[] = 'Stok ' . e($barangDb['nama']) . ' hanya ' . (int) $barangDb['stok']
+                    . ', jumlah diminta ' . $jumlahDiminta . '.';
+            }
+        }
     }
 
     // Semua valid → panggil stored procedure penjualan.

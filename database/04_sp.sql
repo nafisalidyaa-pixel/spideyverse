@@ -34,33 +34,14 @@ BEGIN
     START TRANSACTION;
     -- Memulai transaksi.
 
-    IF p_jumlah <= 0 THEN
-        SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Jumlah harus lebih dari nol';
-    END IF;
-    -- Memastikan jumlah barang yang dijual lebih dari nol.
-
+    -- Validasi jumlah, barang, dan margin dilakukan di aplikasi.
     SELECT COUNT(*) INTO v_jumlah_data
     FROM barang
     WHERE idbarang = p_idbarang AND status = 1;
-    -- Memastikan barang tersedia dan berstatus aktif.
-
-    IF v_jumlah_data = 0 THEN
-        SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Barang tidak ditemukan atau tidak aktif';
-    END IF;
-    -- Jika barang tidak ditemukan atau tidak aktif, transaksi ditolak.
 
     SELECT COUNT(*) INTO v_jumlah_data
     FROM margin_penjualan
     WHERE idmargin_penjualan = p_idmargin AND status = 1;
-    -- Memastikan margin penjualan tersedia dan aktif.
-
-    IF v_jumlah_data = 0 THEN
-        SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Margin tidak ditemukan atau tidak aktif';
-    END IF;
-    -- Jika margin tidak ditemukan atau tidak aktif, transaksi ditolak.
 
     SELECT harga INTO v_harga
     FROM barang
@@ -158,15 +139,10 @@ BEGIN
     WHERE idmargin_penjualan = p_idmargin AND status = 1
     LIMIT 1;
 
-    IF v_persen IS NULL THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Margin tidak ditemukan atau tidak aktif';
-    END IF;
+    -- Validasi margin & keranjang dilakukan di aplikasi.
 
-    -- 2. Validasi keranjang tidak kosong.
+    -- 2. Siapkan string CSV keranjang.
     SET v_sisa = TRIM(COALESCE(p_items_csv, ''));
-    IF v_sisa = '' THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Minimal satu barang harus diisi';
-    END IF;
 
     -- 3. Buat header penjualan.
     INSERT INTO penjualan (subtotal_nilai, ppn, total_nilai, iduser, idmargin_penjualan)
@@ -181,20 +157,10 @@ BEGIN
         SET v_jumlah = CAST(SUBSTRING_INDEX(v_sisa, ',', 1) AS UNSIGNED);
         SET v_sisa = IF(LOCATE(',', v_sisa) > 0, SUBSTRING(v_sisa, LOCATE(',', v_sisa) + 1), '');
 
-        IF v_idbarang <= 0 OR v_jumlah <= 0 THEN
-            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Data barang tidak valid';
-        END IF;
-
+        -- Validasi barang & stok dilakukan di aplikasi (penjualan_tambah.php).
         SELECT COUNT(*) INTO v_ada FROM barang WHERE idbarang = v_idbarang AND status = 1;
-        IF v_ada = 0 THEN
-            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Barang tidak ditemukan atau tidak aktif';
-        END IF;
-
         SELECT COALESCE(SUM(masuk - keluar), 0) INTO v_stok
         FROM kartu_stok WHERE idbarang = v_idbarang;
-        IF v_stok < v_jumlah THEN
-            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Stok barang tidak mencukupi';
-        END IF;
 
         SELECT harga INTO v_harga FROM barang WHERE idbarang = v_idbarang;
         SET v_harga_jual = ROUND(v_harga + (v_harga * v_persen / 100));

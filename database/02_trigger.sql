@@ -45,22 +45,13 @@ CREATE TRIGGER `trg_penjualan_validasi_stok` BEFORE INSERT ON `detail_penjualan`
 BEGIN
     DECLARE v_stock INT DEFAULT 0;
 
-    IF NEW.jumlah <= 0 THEN
-        SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Jumlah penjualan harus lebih dari nol';
-    END IF;
--- POV masukin jumlah penjualan sebanyak 0, kondisi NEW.jumlah <= 0 jadinya ditolak
-
+    -- Hitung stok tersedia, disimpan di variabel sesi.
+    -- Validasi jumlah & stok dilakukan di aplikasi (penjualan_tambah.php).
     SELECT COALESCE(SUM(masuk - keluar), 0)
     INTO v_stock
     FROM kartu_stok
     WHERE idbarang = NEW.idbarang;
--- kalo lebih dr 0 dihitung cukup apa mines
-    IF v_stock < NEW.jumlah THEN
-        SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Stok barang tidak mencukupi';
-    END IF;
-    -- pov barangnya melebihi stok, ditolak
+    SET @stok_tersedia = v_stock;
 END ;;
 DELIMITER ;
 
@@ -121,21 +112,11 @@ BEGIN
     INTO v_total_retur
     FROM detail_retur
     WHERE iddetail_penerimaan = NEW.iddetail_penerimaan;
--- cek jumlah
-    IF v_total_retur > v_jumlah_terima THEN
-        SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Jumlah retur melebihi penerimaan';
-    END IF;
--- pov melebihi = tolak
+-- cek jumlah & stok: validasi dilakukan di aplikasi (retur_tambah.php).
     SELECT COALESCE(SUM(masuk - keluar), 0)
     INTO v_stock
     FROM kartu_stok
     WHERE idbarang = v_idbarang;
--- hitung sisa stok
-    IF v_stock < NEW.jumlah THEN
-        SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Stok tidak cukup untuk retur';
-    END IF;
 -- masukin sisa stok
     INSERT INTO kartu_stok
     (
