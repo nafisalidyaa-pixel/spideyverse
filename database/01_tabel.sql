@@ -132,7 +132,7 @@ CREATE TABLE `margin_penjualan` (
   CONSTRAINT `margin_penjualan_ibfk_1` FOREIGN KEY (`iduser`) REFERENCES `user` (`iduser`)
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
-INSERT INTO `margin_penjualan` VALUES (1,'2026-11-04 16:47:48',10,1,1,'2026-11-04 16:47:48'),(2,'2026-11-04 16:47:48',15,0,1,'2026-11-04 16:47:48'),(3,'2026-11-04 16:47:48',20,0,1,'2026-11-04 16:47:48');
+INSERT INTO `margin_penjualan` VALUES (1,'2026-11-04 16:47:48',10,1,1,'2026-11-04 16:47:48'),(2,'2026-11-04 16:47:48',15,0,1,'2026-11-04 16:47:48'),(3,'2026-11-04 16:47:48',20,0,1,'2026-11-04 16:47:48'),(4,'2026-11-27 00:00:00',5,0,1,'2026-11-27 00:00:00'),(5,'2026-11-27 00:00:00',3,0,1,'2026-11-27 00:00:00');
 
 -- Tabel penerimaan: header barang yang diterima dari pengadaan.
 -- Relasinya ke pengadaan dan user, detailnya ada di detail_penerimaan.
