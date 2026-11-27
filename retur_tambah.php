@@ -128,6 +128,7 @@ require __DIR__ . '/inc/header.php';
     <?php if (!$pilihan): ?>
         <div class="alert alert-info">Tidak ada item penerimaan yang masih bisa diretur, atau stok barang penerimaan sudah habis terjual.</div>
     <?php else: ?>
+        <div id="pesanRetur" class="alert alert-error" style="display:none"></div>
         <form method="post" action="retur_tambah.php" onsubmit="return cekJumlah()">
             <div class="form-grid">
                 <div style="grid-column:1/-1">
@@ -156,7 +157,7 @@ require __DIR__ . '/inc/header.php';
                 <div>
                     <label for="jumlah">Jumlah Retur</label>
                     <input type="number" id="jumlah" name="jumlah" min="1"
-                           value="<?= e($jumlah > 0 ? $jumlah : 1) ?>" required>
+                           value="<?= e($jumlah > 0 ? $jumlah : 1) ?>" required oninput="tampilSisa()">
                     <small id="infoSisa">Maks. retur: -</small>
                 </div>
                 <div>
@@ -167,7 +168,7 @@ require __DIR__ . '/inc/header.php';
             </div>
 
             <div class="form-aksi">
-                <button type="submit" class="btn">Simpan Retur</button>
+                <button type="submit" class="btn" id="tombolRetur">Simpan Retur</button>
                 <a class="btn btn-outline" href="retur.php">Batal</a>
             </div>
         </form>
@@ -205,11 +206,18 @@ function tampilSisa() {
     info.textContent = 'Sisa penerimaan: ' + sisa + ' pcs · Stok tersedia: ' + stok
         + ' pcs · Maks. retur: ' + max + ' pcs';
 
-    if (input) {
-        input.setAttribute('max', max);
-        if (Number(input.value || 0) > max) {
-            input.value = max;
-        }
+    const pesan = document.getElementById('pesanRetur');
+    const tombol = document.getElementById('tombolRetur');
+    if (input && Number(input.value || 0) > max) {
+        input.classList.add('jumlah-error');
+        pesan.textContent = 'Jumlah retur melebihi batas — maksimal ' + max
+            + ' pcs (sisa penerimaan ' + sisa + ', stok tersedia ' + stok + ').';
+        pesan.style.display = '';
+        if (tombol) tombol.disabled = true;
+    } else {
+        if (input) input.classList.remove('jumlah-error');
+        pesan.style.display = 'none';
+        if (tombol) tombol.disabled = false;
     }
 }
 
@@ -222,8 +230,11 @@ function cekJumlah() {
     const max = Number(opsi.dataset.max || 0);
     const jumlah = Number(document.getElementById('jumlah').value || 0);
     if (jumlah > max) {
-        alert('Jumlah retur maksimal ' + max + ' pcs '
-            + '(sisa penerimaan ' + opsi.dataset.sisa + ', stok tersedia ' + opsi.dataset.stok + ').');
+        const pesan = document.getElementById('pesanRetur');
+        pesan.textContent = 'Jumlah retur melebihi batas — maksimal ' + max
+            + ' pcs (sisa penerimaan ' + opsi.dataset.sisa + ', stok tersedia ' + opsi.dataset.stok + ').';
+        pesan.style.display = '';
+        document.getElementById('jumlah').classList.add('jumlah-error');
         return false;
     }
     return true;

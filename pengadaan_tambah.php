@@ -195,6 +195,7 @@ require __DIR__ . '/inc/header.php';
         </div>
 
         <h3 class="mt">Daftar Barang</h3>
+        <div id="pesanPengadaan" class="alert alert-error" style="display:none"></div>
         <div class="tabel-wrap">
             <table id="tabelItem">
                 <thead>
@@ -223,10 +224,10 @@ require __DIR__ . '/inc/header.php';
                         </td>
                         <td class="vendor-baris">Otomatis</td>
                         <td class="angka">
-                            <input type="number" name="baris[0][harga]" class="input-harga" min="0" value="0" onchange="hitungTotal()">
+                            <input type="number" name="baris[0][harga]" class="input-harga" min="0" value="0" onchange="hitungTotal()" oninput="hitungTotal()">
                         </td>
                         <td class="angka">
-                            <input type="number" name="baris[0][jumlah]" class="input-jumlah" min="1" value="1" onchange="hitungTotal()">
+                            <input type="number" name="baris[0][jumlah]" class="input-jumlah" min="1" value="1" onchange="hitungTotal()" oninput="hitungTotal()">
                         </td>
                         <td class="angka subtotal-baris">Rp 0</td>
                         <td><button type="button" class="btn btn-kecil btn-merah" onclick="hapusBaris(this)">X</button></td>
@@ -248,7 +249,7 @@ require __DIR__ . '/inc/header.php';
         </div>
 
         <div class="form-aksi">
-            <button type="submit" class="btn" <?= !$daftarVendor ? 'disabled' : '' ?>>Simpan Pengadaan</button>
+            <button type="submit" class="btn" id="tombolPengadaan" <?= !$daftarVendor ? 'disabled' : '' ?>>Simpan Pengadaan</button>
             <a class="btn btn-outline" href="pengadaan.php">Batal</a>
         </div>
     </form>
@@ -257,6 +258,7 @@ require __DIR__ . '/inc/header.php';
 <script>
 // JS form pengadaan: isi harga, tambah/hapus baris, dan hitung total.
 let nomorBaris = 1;
+const ADA_VENDOR = <?= $daftarVendor ? 'true' : 'false' ?>;
 
 function rupiah(n) {
     return 'Rp ' + Number(n || 0).toLocaleString('id-ID');
@@ -286,6 +288,8 @@ function tambahBaris() {
     baru.querySelector('.input-harga').value = 0;
     baru.querySelector('.input-jumlah').name = 'baris[' + n + '][jumlah]';
     baru.querySelector('.input-jumlah').value = 1;
+    baru.querySelector('.input-jumlah').classList.remove('jumlah-error');
+    baru.querySelector('.input-harga').classList.remove('jumlah-error');
     baru.querySelector('.subtotal-baris').textContent = 'Rp 0';
     baru.querySelector('.vendor-baris').textContent = 'Otomatis';
 
@@ -303,17 +307,49 @@ function hapusBaris(btn) {
     hitungTotal();
 }
 
-// Hitung subtotal, PPN 11%, dan total semua baris.
+// Hitung subtotal, PPN, dan cek input (tanpa mengubah angka otomatis).
 function hitungTotal() {
     let subtotal = 0;
+    const peringatan = [];
 
     document.querySelectorAll('.baris-item').forEach(function (baris) {
-        const harga = Number(baris.querySelector('.input-harga').value || 0);
-        const jumlah = Number(baris.querySelector('.input-jumlah').value || 0);
+        const inputHarga = baris.querySelector('.input-harga');
+        const inputJumlah = baris.querySelector('.input-jumlah');
+        const select = baris.querySelector('.pilih-barang');
+        const opsi = select.options[select.selectedIndex];
+        const nama = opsi && opsi.text ? opsi.text.split(' (')[0] : 'Barang';
+        const harga = Number(inputHarga.value || 0);
+        const jumlah = Number(inputJumlah.value || 0);
         const sub = harga * jumlah;
+
         baris.querySelector('.subtotal-baris').textContent = rupiah(sub);
         subtotal += sub;
+
+        if (select.value !== '' && jumlah < 1) {
+            inputJumlah.classList.add('jumlah-error');
+            peringatan.push(nama + ': jumlah minimal 1.');
+        } else {
+            inputJumlah.classList.remove('jumlah-error');
+        }
+        if (harga < 0) {
+            inputHarga.classList.add('jumlah-error');
+            peringatan.push(nama + ': harga tidak boleh negatif.');
+        } else {
+            inputHarga.classList.remove('jumlah-error');
+        }
     });
+
+    const pesan = document.getElementById('pesanPengadaan');
+    const tombol = document.getElementById('tombolPengadaan');
+    if (peringatan.length > 0) {
+        pesan.textContent = 'Periksa input pengadaan — ' + peringatan.join(' | ');
+        pesan.style.display = '';
+        if (tombol) tombol.disabled = true;
+    } else {
+        pesan.textContent = '';
+        pesan.style.display = 'none';
+        if (tombol) tombol.disabled = !ADA_VENDOR;
+    }
 
     const ppn = Math.round(subtotal * 0.11);
     document.getElementById('teksSubtotal').textContent = rupiah(subtotal);

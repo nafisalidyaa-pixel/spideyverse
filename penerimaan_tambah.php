@@ -246,6 +246,7 @@ require __DIR__ . '/inc/header.php';
                 <a class="btn btn-outline" href="penerimaan_tambah.php">Ganti Pengadaan</a>
             </div>
 
+            <div id="pesanTerima" class="alert alert-error" style="display:none"></div>
             <form method="post" action="penerimaan_tambah.php">
                 <input type="hidden" name="idpengadaan" value="<?= (int) $idpengadaan ?>">
 
@@ -274,7 +275,10 @@ require __DIR__ . '/inc/header.php';
                                     <td class="angka">
                                         <input type="number" style="max-width:110px;margin-left:auto"
                                                name="terima[<?= (int) $d['iddetail_pengadaan'] ?>]"
-                                               min="0" max="<?= $sisa ?>" value="<?= $sisa ?>"
+                                               min="0" value="0"
+                                               data-sisa="<?= $sisa ?>"
+                                               data-nama="<?= e($d['nama']) ?>"
+                                               oninput="cekTerima()"
                                                <?= $sisa <= 0 ? 'disabled' : '' ?>>
                                     </td>
                                 </tr>
@@ -284,7 +288,7 @@ require __DIR__ . '/inc/header.php';
                 </div>
 
                 <div class="form-aksi">
-                    <button type="submit" class="btn">Simpan Penerimaan</button>
+                    <button type="submit" class="btn" id="tombolTerima">Simpan Penerimaan</button>
                     <a class="btn btn-outline" href="penerimaan.php">Batal</a>
                 </div>
                 <p class="mt"><small>Stok barang akan otomatis bertambah setelah penerimaan disimpan.</small></p>
@@ -292,5 +296,39 @@ require __DIR__ . '/inc/header.php';
         </div>
     <?php endif; ?>
 <?php endif; ?>
+
+<script>
+// Cek jumlah terima terhadap sisa PO (tanpa mengubah angka otomatis).
+function cekTerima() {
+    const pesan = document.getElementById('pesanTerima');
+    const tombol = document.getElementById('tombolTerima');
+    const peringatan = [];
+
+    document.querySelectorAll('input[name^="terima["]').forEach(function (input) {
+        const sisa = Number(input.dataset.sisa || 0);
+        const nama = input.dataset.nama || '-';
+        const jumlah = Number(input.value || 0);
+        if (jumlah > sisa) {
+            input.classList.add('jumlah-error');
+            peringatan.push(nama + ': sisa ' + sisa + ', diminta ' + jumlah + '.');
+        } else {
+            input.classList.remove('jumlah-error');
+        }
+    });
+
+    if (peringatan.length > 0) {
+        pesan.textContent = 'Jumlah terima melebihi sisa pengadaan — ' + peringatan.join(' | ');
+        pesan.style.display = '';
+        if (tombol) tombol.disabled = true;
+    } else {
+        pesan.textContent = '';
+        pesan.style.display = 'none';
+        if (tombol) tombol.disabled = false;
+    }
+}
+
+// Jalankan sekali saat halaman dibuka.
+cekTerima();
+</script>
 
 <?php require __DIR__ . '/inc/footer.php'; ?>
