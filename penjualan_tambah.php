@@ -138,6 +138,7 @@ require __DIR__ . '/inc/header.php';
         </div>
 
         <h3 class="mt">Daftar Barang</h3>
+        <div id="pesanStok" class="alert alert-error" style="display:none"></div>
         <div class="tabel-wrap">
             <table id="tabelItem">
                 <thead>
@@ -170,7 +171,7 @@ require __DIR__ . '/inc/header.php';
                         <td class="angka stok-baris">-</td>
                         <td class="angka">
                             <input type="number" name="baris[0][jumlah]" class="input-jumlah"
-                                   min="1" max="1" value="1"
+                                   min="1" value="1"
                                    onchange="hitungTotal()" oninput="hitungTotal()">
                         </td>
                         <td class="angka subtotal-baris">Rp 0</td>
@@ -197,7 +198,7 @@ require __DIR__ . '/inc/header.php';
         </div>
 
         <div class="form-aksi">
-            <button type="submit" class="btn" <?= !$marginAuto ? 'disabled' : '' ?>>Proses Penjualan</button>
+            <button type="submit" class="btn" id="tombolProses" <?= !$marginAuto ? 'disabled' : '' ?>>Proses Penjualan</button>
             <a class="btn btn-outline" href="penjualan.php">Riwayat</a>
         </div>
     </form>
@@ -207,24 +208,20 @@ require __DIR__ . '/inc/header.php';
 // Nomor baris berikutnya buat nama input dinamis.
 let nomorBaris = 1;
 const MARGIN_PERSEN = <?= (float) $persenAuto ?>;
+const MARGIN_AKTIF = <?= $marginAuto ? 'true' : 'false' ?>;
 
 // Format angka jadi rupiah.
 function rupiah(n) {
     return 'Rp ' + Number(n || 0).toLocaleString('id-ID');
 }
 
-// Isi stok & batas jumlah waktu barang dipilih.
+// Isi stok waktu barang dipilih (tidak mengubah jumlah otomatis).
 function isiHarga(select) {
     const baris = select.closest('.baris-item');
     const opsi = select.options[select.selectedIndex];
-    const harga = opsi ? Number(opsi.dataset.harga || 0) : 0;
     const stok = opsi ? Number(opsi.dataset.stok || 0) : 0;
 
     baris.querySelector('.stok-baris').textContent = stok > 0 ? stok : '-';
-
-    const jumlah = baris.querySelector('.input-jumlah');
-    jumlah.setAttribute('max', stok > 0 ? stok : 1);
-    jumlah.value = Math.max(1, Math.min(Number(jumlah.value || 1), stok > 0 ? stok : 1));
 
     hitungTotal();
 }
@@ -240,7 +237,7 @@ function tambahBaris() {
     baru.querySelector('.pilih-barang').selectedIndex = 0;
     baru.querySelector('.input-jumlah').name = 'baris[' + n + '][jumlah]';
     baru.querySelector('.input-jumlah').value = 1;
-    baru.querySelector('.input-jumlah').setAttribute('max', 1);
+    baru.querySelector('.input-jumlah').classList.remove('jumlah-error');
     baru.querySelector('.harga-jual-baris').textContent = 'Rp 0';
     baru.querySelector('.stok-baris').textContent = '-';
     baru.querySelector('.subtotal-baris').textContent = 'Rp 0';
@@ -259,17 +256,20 @@ function hapusBaris(btn) {
     hitungTotal();
 }
 
-// Hitung harga jual per baris, subtotal, PPN 11%, dan total bayar.
+// Hitung harga jual, subtotal, PPN, dan cek stok (tanpa mengubah jumlah otomatis).
 function hitungTotal() {
     let subtotal = 0;
+    const peringatan = [];
 
     document.querySelectorAll('.baris-item').forEach(function (baris) {
         const select = baris.querySelector('.pilih-barang');
         const opsi = select.options[select.selectedIndex];
+        const nama = opsi ? opsi.text.split(' (')[0] : '-';
         const hargaDasar = opsi ? Number(opsi.dataset.harga || 0) : 0;
         const stok = opsi ? Number(opsi.dataset.stok || 0) : 0;
+        const input = baris.querySelector('.input-jumlah');
+        const jumlah = Number(input.value || 0);
 
-        const jumlah = Number(baris.querySelector('.input-jumlah').value || 0);
         const hargaJual = Math.round(hargaDasar + (hargaDasar * MARGIN_PERSEN / 100));
         const sub = hargaJual * jumlah;
 
@@ -277,11 +277,26 @@ function hitungTotal() {
         baris.querySelector('.subtotal-baris').textContent = rupiah(sub);
         subtotal += sub;
 
-        const input = baris.querySelector('.input-jumlah');
-        if (stok > 0 && jumlah > stok) {
-            input.value = stok;
+        // Kalau barang dipilih dan jumlah melebihi stok, kasih tanda + pesan (tidak diubah).
+        if (select.value !== '' && jumlah > stok) {
+            input.classList.add('jumlah-error');
+            peringatan.push(nama + ': stok tersedia ' + stok + ', jumlah diminta ' + jumlah + '.');
+        } else {
+            input.classList.remove('jumlah-error');
         }
     });
+
+    const kotakPesan = document.getElementById('pesanStok');
+    const tombolProses = document.getElementById('tombolProses');
+    if (peringatan.length > 0) {
+        kotakPesan.textContent = 'Jumlah melebihi stok — ' + peringatan.join(' | ');
+        kotakPesan.style.display = '';
+        if (tombolProses) tombolProses.disabled = true;
+    } else {
+        kotakPesan.textContent = '';
+        kotakPesan.style.display = 'none';
+        if (tombolProses) tombolProses.disabled = !MARGIN_AKTIF;
+    }
 
     const ppn = Math.round(subtotal * 0.11);
     document.getElementById('teksSubtotal').textContent = rupiah(subtotal);

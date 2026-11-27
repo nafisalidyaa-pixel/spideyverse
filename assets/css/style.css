@@ -1856,3 +1856,10 @@ h3 {
         stroke-dashoffset: 0 !important;
     }
 }
+
+/* Tanda jumlah melebihi stok di form penjualan. */
+.input-jumlah.jumlah-error {
+    border-color: #d6336c !important;
+    background: #fff0f6 !important;
+    outline: 1px solid #d6336c;
+}
