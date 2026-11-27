@@ -55,7 +55,7 @@ require __DIR__ . '/header.php';
     <div>
         <div class="sub">Menampilkan <b><?= count($data) ?></b> data <?= e($cfg['judul']) ?>.</div>
     </div>
-    <?php if ($ada_aksi && ($cfg['aksi'] ?? '') !== 'aktifkan'): ?>
+    <?php if ($ada_aksi): ?>
         <a class="btn" href="<?= e($dasar) ?>_tambah.php">+ Tambah Data</a>
     <?php elseif (!$boleh_edit): ?>
         <span class="badge badge-biru">Hanya Lihat</span>
@@ -125,12 +125,16 @@ require __DIR__ . '/header.php';
                         <?php endforeach; ?>
                         <?php if ($ada_aksi && ($cfg['aksi'] ?? '') === 'aktifkan'): ?>
                             <td>
-                                <?php if ((int) $row[$cfg['pk']] === id_role()): ?>
-                                    <span class="badge badge-hijau">Sedang Dipakai</span>
-                                <?php else: ?>
+                                <div class="aksi">
                                     <a class="btn btn-kecil btn-outline"
-                                       href="logout.php?role=<?= (int) $row[$cfg['pk']] ?>">Aktifkan</a>
-                                <?php endif; ?>
+                                       href="<?= e($dasar) ?>_edit.php?id=<?= (int) $row[$cfg['pk']] ?>">Edit</a>
+                                    <?php if ((int) $row[$cfg['pk']] === id_role()): ?>
+                                        <span class="badge badge-hijau">Sedang Dipakai</span>
+                                    <?php else: ?>
+                                        <a class="btn btn-kecil btn-outline"
+                                           href="logout.php?role=<?= (int) $row[$cfg['pk']] ?>">Aktifkan</a>
+                                    <?php endif; ?>
+                                </div>
                             </td>
                         <?php elseif ($ada_aksi): ?>
                             <td>
