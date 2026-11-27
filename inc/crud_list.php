@@ -136,6 +136,16 @@ require __DIR__ . '/header.php';
                                     <?php endif; ?>
                                 </div>
                             </td>
+                        <?php elseif ($ada_aksi && ($cfg['aksi'] ?? '') === 'edit_saja'): ?>
+                            <td>
+                                <div class="aksi">
+                                    <a class="btn btn-kecil btn-outline"
+                                       href="<?= e($dasar) ?>_edit.php?id=<?= (int) $row[$cfg['pk']] ?>">Edit</a>
+                                    <?php if ((int) $row[$cfg['pk']] === id_role()): ?>
+                                        <span class="badge badge-hijau">Sedang Dipakai</span>
+                                    <?php endif; ?>
+                                </div>
+                            </td>
                         <?php elseif ($ada_aksi && ($cfg['aksi'] ?? '') === 'margin_status'): ?>
                             <td>
                                 <div class="aksi">

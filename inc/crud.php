@@ -103,7 +103,7 @@ function master_config(string $key): array
         ],
 
         // Config master role (daftar baca view v_role).
-        // Aktif = role sedang dipakai (jumlah_user > 0), bukan tombol yang diklik.
+        // Semua role aktif (dipakai sistem), beda hanya mana yang sedang login.
         'role' => [
             'judul'    => 'Data Role',
             'halaman'  => 'role.php',
@@ -111,14 +111,14 @@ function master_config(string $key): array
             'pk'       => 'idrole',
             'roles'    => [1],
             'edit_roles' => [1],
-            'aksi'     => 'aktifkan',
+            'aksi'     => 'edit_saja',
             // Membaca dari view: v_role (definisi di database/05_view.sql)
             'list_sql' => "SELECT r.idrole, r.nama_role, r.jumlah_user
                            FROM v_role r",
             'order_sql' => " ORDER BY r.idrole",
             'kolom'    => [
                 ['label' => 'Nama Role', 'key' => 'nama_role'],
-                ['label' => 'Status', 'key' => 'idrole', 'format' => 'status_role_login'],
+                ['label' => 'Status', 'key' => 'jumlah_user', 'format' => 'status_pakai'],
             ],
             'fields'   => [
                 ['name' => 'nama_role', 'label' => 'Nama Role', 'type' => 'text',
@@ -232,6 +232,9 @@ function tampil_nilai(string $format, $nilai)
             return ((int) $nilai === 1)
                 ? '<span class="badge badge-hijau">Aktif</span>'
                 : '<span class="badge badge-merah">Nonaktif</span>';
+        case 'status_pakai':
+            // Semua role aktif; yang sedang dipakai ditandai di kolom aksi.
+            return '<span class="badge badge-hijau">Aktif</span>';
         case 'status_role_login':
             // Aktif cuma untuk role yang sedang dipakai user yang login.
             return ((int) $nilai === id_role())
