@@ -1,4 +1,4 @@
- <?php
+<?php
 // laporan_pengadaan.php ⤳ laporan pengadaan per periode + rekap per vendor.
 require_once __DIR__ . '/inc/auth.php';
 cek_role([1, 2]);
